@@ -1,0 +1,19 @@
+# Node / Vite
+node_modules/
+dist/
+*.log
+.env*
+
+# Spring Boot
+backend/target/
+backend/data/
+backend/src/main/resources/static/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Created by VS Code extensions, not part of the project
+.github/modernize/
