@@ -8,8 +8,11 @@ Three games: **Classroom Bingo**, **Snakes & Ladders**, and **Card Matching**.
 
 | Student ID | Name |
 |---|---|
-| XXXXXXXXXX | Bannawich Juwa |
-| XXXXXXXXXX | (add member) |
+| 6831503055 | Bannawich Juwa |
+| 6831503036 | Chanon Phetsuit |
+| 6831503047 | Daniel Yee-Wangkong |
+| 6831503049 | Traiwit Jaroensri |
+| 6831503084 | Kalutara Koralalage Himsara Britto Adikaram |
 
 ## Technology
 
