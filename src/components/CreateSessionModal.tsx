@@ -1,5 +1,5 @@
 import { DB_LIMITS, fit, fitPoints } from '../config/dbLimits';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Trash2, ArrowRight, ArrowLeft, AlertTriangle
 } from 'lucide-react';
@@ -140,8 +140,104 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
 
   const filledCount = questions.filter((q) => q.text.trim().length > 0).length;
 
+  // ---- Required-field validation (shown once the teacher tries to move on) ----
+  const [showErrors, setShowErrors] = useState(false);
+  const [errorAttempt, setErrorAttempt] = useState(0);
+  const isEn = language === 'en';
+  const customMinutesNum = parseInt(customMinutes, 10);
+  const isTimeInvalid =
+    customMinutes.trim() !== '' && (isNaN(customMinutesNum) || customMinutesNum < 1 || customMinutesNum > 120);
+  const isTitleMissing = title.trim().length === 0;
+  const emptyTeamNameIndexes = teams
+    .map((tm, i) => (tm.name.trim().length === 0 ? i : -1))
+    .filter((i) => i !== -1);
+  const duplicateTeamNames = teams
+    .map((tm) => tm.name.trim().toLowerCase())
+    .filter((n, i, arr) => n.length > 0 && arr.indexOf(n) !== i);
+  const questionMissingAnswerIndexes = questions
+    .map((q, i) => (q.text.trim().length > 0 && !(q.answer || '').trim() ? i : -1))
+    .filter((i) => i !== -1);
+  const answerMissingQuestionIndexes = questions
+    .map((q, i) => (q.text.trim().length === 0 && (q.answer || '').trim().length > 0 ? i : -1))
+    .filter((i) => i !== -1);
+
+  const getStepErrors = (s: 1 | 2 | 3): string[] => {
+    const errs: string[] = [];
+    if (s === 1) {
+      if (isTitleMissing) {
+        errs.push(isEn ? 'Please enter a session name / activity topic.' : 'กรุณาใส่ชื่อ Session หรือหัวข้อกิจกรรม');
+      }
+      if (isTimeInvalid) {
+        errs.push(isEn ? 'Time limit must be between 1 and 120 minutes.' : 'ระยะเวลาแข่งขันต้องอยู่ระหว่าง 1 - 120 นาที');
+      }
+    }
+    if (s === 2) {
+      if (emptyTeamNameIndexes.length > 0) {
+        errs.push(
+          isEn
+            ? `Please name every team (team ${emptyTeamNameIndexes.map((i) => i + 1).join(', ')} is empty).`
+            : `กรุณาตั้งชื่อทีมให้ครบ (ทีมที่ ${emptyTeamNameIndexes.map((i) => i + 1).join(', ')} ยังไม่มีชื่อ)`
+        );
+      }
+      if (duplicateTeamNames.length > 0) {
+        errs.push(isEn ? 'Team names must be different from each other.' : 'ชื่อทีมซ้ำกัน กรุณาตั้งชื่อทีมให้ไม่ซ้ำกัน');
+      }
+    }
+    if (s === 3) {
+      // (Too few / zero questions is handled by the low-questions pop-up on submit.)
+      if (questionMissingAnswerIndexes.length > 0) {
+        errs.push(
+          isEn
+            ? `Please enter the answer key for question ${questionMissingAnswerIndexes.map((i) => i + 1).join(', ')}.`
+            : `กรุณาใส่เฉลยคำตอบของคำถามข้อที่ ${questionMissingAnswerIndexes.map((i) => i + 1).join(', ')}`
+        );
+      }
+      if (answerMissingQuestionIndexes.length > 0) {
+        errs.push(
+          isEn
+            ? `Question ${answerMissingQuestionIndexes.map((i) => i + 1).join(', ')} has an answer but no question text.`
+            : `ข้อที่ ${answerMissingQuestionIndexes.map((i) => i + 1).join(', ')} มีเฉลยแต่ยังไม่ได้ใส่คำถาม`
+        );
+      }
+    }
+    return errs;
+  };
+
+  /** Returns the first step (up to and including `upTo`) that still has errors, or null. */
+  const findInvalidStep = (upTo: 1 | 2 | 3): 1 | 2 | 3 | null => {
+    for (const s of [1, 2, 3] as const) {
+      if (s > upTo) break;
+      if (getStepErrors(s).length > 0) return s;
+    }
+    return null;
+  };
+
+  /** Move to another step; moving forward requires the earlier steps to be valid. */
+  const goToStep = (target: 1 | 2 | 3) => {
+    if (target > step) {
+      const bad = findInvalidStep((target - 1) as 1 | 2 | 3);
+      if (bad !== null) {
+        playClickSound();
+        setShowErrors(true);
+        setErrorAttempt((n) => n + 1);
+        setStep(bad);
+        return;
+      }
+    }
+    setStep(target);
+  };
+
+  const currentStepErrors = showErrors ? getStepErrors(step) : [];
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  // Bring the warning banner into view whenever a validation attempt fails
+  useEffect(() => {
+    if (errorAttempt > 0 && bodyRef.current) bodyRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [errorAttempt]);
+
   useEffect(() => {
     if (isOpen) {
+      setShowErrors(false);
       setStep(1);
       setTitle('');
       setSubject('');
@@ -347,6 +443,15 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
   const handleFinalSubmit = (action: 'play' | 'save_only' = 'play', bypassWarning: boolean = false) => {
     playClickSound();
 
+    const invalidStep = findInvalidStep(3);
+    if (invalidStep !== null) {
+      setShowErrors(true);
+        setErrorAttempt((n) => n + 1);
+      setShowLowQuestionsWarning(false);
+      setStep(invalidStep);
+      return;
+    }
+
     const filled = questions.filter((q) => q.text.trim().length > 0).length;
     if (!bypassWarning && filled < recommendedCount) {
       setPendingAction(action);
@@ -475,7 +580,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
 
           <button
             type="button"
-            onClick={() => setStep(2)}
+            onClick={() => goToStep(2)}
             className={`py-2 px-3 flex items-center justify-center gap-2 border-b-3 transition cursor-pointer ${
               step === 2 ? 'border-[var(--px-border)] bg-[var(--color-px-yellow)] text-[#2A2350]' : 'border-transparent text-[var(--px-text-muted)] hover:bg-[var(--px-surface-2)]'
             }`}
@@ -488,7 +593,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
 
           <button
             type="button"
-            onClick={() => setStep(3)}
+            onClick={() => goToStep(3)}
             className={`py-2 px-3 flex items-center justify-center gap-2 border-b-3 transition cursor-pointer ${
               step === 3 ? 'border-[var(--px-border)] bg-[var(--color-px-yellow)] text-[#2A2350]' : 'border-transparent text-[var(--px-text-muted)] hover:bg-[var(--px-surface-2)]'
             }`}
@@ -504,7 +609,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-[var(--px-surface)] text-[var(--px-text)]">
+        <div ref={bodyRef} className="p-6 overflow-y-auto flex-1 space-y-6 bg-[var(--px-surface)] text-[var(--px-text)]">
           {/* Guest Mode Warning Banner (Auto-purge in 24h) */}
           {!currentUser && (
             <div className="p-3.5 bg-amber-500/15 border-2 border-amber-500/40 rounded flex items-start gap-3 text-xs sm:text-sm shadow-sm">
@@ -529,6 +634,27 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
               )}
             </div>
           )}
+
+          {/* Required-field warning banner */}
+          {currentStepErrors.length > 0 && (
+            <div
+              role="alert"
+              className="p-3.5 bg-[var(--color-px-error)] text-[#7A1D28] border-3 border-[#B91C47] shadow-[3px_3px_0_var(--px-hard-shadow)] flex items-start gap-3 text-xs sm:text-sm"
+            >
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold">
+                  {isEn ? 'Some important information is missing' : 'ยังกรอกข้อมูลสำคัญไม่ครบ'}
+                </h4>
+                <ul className="mt-1 space-y-0.5 list-disc pl-4 font-bold">
+                  {currentStepErrors.map((msg) => (
+                    <li key={msg}>{msg}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
           {/* STEP 1: Basic Info & Game Mode */}
           {step === 1 && (
             <div className="space-y-6">
@@ -543,8 +669,16 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                     maxLength={DB_LIMITS.sessionName}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder={t('sessionTitlePlaceholder')}
-                    className="px-input w-full px-3 py-2 text-xs sm:text-sm font-bold"
+                    aria-invalid={showErrors && isTitleMissing}
+                    className={`px-input w-full px-3 py-2 text-xs sm:text-sm font-bold ${
+                      showErrors && isTitleMissing ? '!border-[#E5484D] ring-2 ring-[#E5484D]/50' : ''
+                    }`}
                   />
+                  {showErrors && isTitleMissing && (
+                    <p className="mt-1 text-xs font-bold text-[#E5484D]">
+                      ⚠ {isEn ? 'Session name is required' : 'จำเป็นต้องใส่ชื่อ Session หรือหัวข้อกิจกรรม'}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -748,9 +882,17 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                         }
                       }}
                       placeholder={t('customMinutesPlaceholder')}
-                      className="px-input py-1 text-center text-xs font-bold"
+                      aria-invalid={isTimeInvalid}
+                      className={`px-input py-1 text-center text-xs font-bold ${
+                        isTimeInvalid ? '!border-[#E5484D] ring-2 ring-[#E5484D]/50' : ''
+                      }`}
                     />
                   </div>
+                  {isTimeInvalid && (
+                    <p className="mt-1 text-xs font-bold text-[#E5484D]">
+                      ⚠ {isEn ? 'Enter 1 – 120 minutes' : 'กรุณาใส่เวลา 1 - 120 นาที'}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -795,7 +937,15 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                             updated[idx].name = e.target.value;
                             setTeams(updated);
                           }}
-                          className="px-input px-2 py-0.5 text-xs font-bold flex-1"
+                          placeholder={isEn ? 'Team name (required)' : 'ชื่อทีม (จำเป็น)'}
+                          aria-invalid={showErrors && tItem.name.trim().length === 0}
+                          className={`px-input px-2 py-0.5 text-xs font-bold flex-1 ${
+                            showErrors &&
+                            (tItem.name.trim().length === 0 ||
+                              duplicateTeamNames.includes(tItem.name.trim().toLowerCase()))
+                              ? '!border-[#E5484D] ring-2 ring-[#E5484D]/50'
+                              : ''
+                          }`}
                         />
                       </div>
                       {teams.length > 2 && (
@@ -969,7 +1119,12 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                       value={q.text}
                       onChange={(e) => handleUpdateQuestion(idx, 'text', e.target.value)}
                       placeholder={t('questionTextPlaceholder', { index: idx + 1 })}
-                      className="px-input w-full px-2.5 py-1.5 text-xs font-bold"
+                      aria-invalid={showErrors && answerMissingQuestionIndexes.includes(idx)}
+                      className={`px-input w-full px-2.5 py-1.5 text-xs font-bold ${
+                        showErrors && answerMissingQuestionIndexes.includes(idx)
+                          ? '!border-[#E5484D] ring-2 ring-[#E5484D]/50'
+                          : ''
+                      }`}
                     />
 
                     <div className="grid sm:grid-cols-2 gap-2">
@@ -979,7 +1134,12 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                         maxLength={DB_LIMITS.correctAnswer}
                         onChange={(e) => handleUpdateQuestion(idx, 'answer', e.target.value)}
                         placeholder={t('answerTextPlaceholder')}
-                        className="px-input px-2.5 py-1 text-xs font-bold bg-[var(--px-surface-sunken)] text-[var(--px-text)] border-2 border-[var(--px-mint)]"
+                        aria-invalid={showErrors && questionMissingAnswerIndexes.includes(idx)}
+                        className={`px-input px-2.5 py-1 text-xs font-bold bg-[var(--px-surface-sunken)] text-[var(--px-text)] border-2 ${
+                          showErrors && questionMissingAnswerIndexes.includes(idx)
+                            ? '!border-[#E5484D] ring-2 ring-[#E5484D]/50'
+                            : 'border-[var(--px-mint)]'
+                        }`}
                       />
                       <input
                         type="text"
@@ -1032,7 +1192,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => setStep((step + 1) as 2 | 3)}
+                onClick={() => goToStep((step + 1) as 2 | 3)}
                 className="px-btn px-4 py-1.5 text-xs font-bold flex items-center gap-1.5"
               >
                 <span>{t('nextStepBtn')}</span>

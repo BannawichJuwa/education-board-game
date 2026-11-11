@@ -717,6 +717,101 @@ export default function App() {
     setSelectedRespondingTeamId(null);
   };
 
+  // Projector mode: jump to the next question that has not been scored yet (wraps around).
+  // Returns false when every question has already been scored.
+  const handleNextOpenQuestion = (): boolean => {
+    if (!activeSession) return false;
+    const questions = activeSession.questions;
+    if (questions.length === 0) return false;
+    const done = new Set([...(activeSession.usedQuestionIds || []), ...(activeSession.awardedQuestionIds || [])]);
+    const currentIndex = questions.findIndex((q) => q.id === activeSession.activeQuestionId);
+    for (let step = 1; step <= questions.length; step++) {
+      const candidate = questions[(currentIndex + step + questions.length) % questions.length];
+      if (!done.has(candidate.id)) {
+        if (candidate.id !== activeSession.activeQuestionId) {
+          updateSessionState({ ...activeSession, activeQuestionId: candidate.id, updatedAt: Date.now() });
+        }
+        setSelectedRespondingTeamId(null);
+        return true;
+      }
+    }
+    setSelectedRespondingTeamId(null);
+    return false;
+  };
+
+  const openProjectorMode = () => {
+    setIsQuestionModalOpen(true);
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) {
+      el.requestFullscreen().catch(() => {
+        /* Browser refused (e.g. iframe) — the overlay still fills the window */
+      });
+    }
+  };
+
+  const closeProjectorMode = () => {
+    setIsQuestionModalOpen(false);
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+
+  // Game ended / session closed while projecting → leave projector mode
+  useEffect(() => {
+    if (isQuestionModalOpen && (!activeSession || activeSession.status === 'completed')) {
+      closeProjectorMode();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSession?.id, activeSession?.status, isQuestionModalOpen]);
+
+  // Is a team still waiting to do its board action (roll dice / claim tile / flip cards)?
+  const isBoardActionPending = activeSession
+    ? activeSession.gameType === 'snakes_ladders'
+      ? Boolean(activeSession.snakesLaddersState?.eligibleRollTeamId)
+      : activeSession.gameType === 'bingo'
+      ? Boolean(activeSession.bingoState?.eligibleClaimTeamId)
+      : Boolean(cardTurnTeamId)
+    : false;
+
+  // The game board — rendered either on the page or inside projector mode (never both,
+  // so auto-rolling dice etc. only happen once)
+  const renderGameBoard = (viewMode: 'split' | 'board_only') => {
+    if (!activeSession) return null;
+    return (
+      <>
+        {activeSession.gameType === 'bingo' && activeSession.bingoState && (
+          <BingoGame
+            session={activeSession}
+            bingoState={activeSession.bingoState}
+            onClaimTile={handleClaimBingoTile}
+            selectedRespondingTeamId={selectedRespondingTeamId}
+            viewMode={viewMode}
+          />
+        )}
+
+        {activeSession.gameType === 'snakes_ladders' && activeSession.snakesLaddersState && (
+          <SnakesLaddersGame
+            session={activeSession}
+            snakesLaddersState={activeSession.snakesLaddersState}
+            onPawnMove={handlePawnMove}
+            selectedRespondingTeamId={selectedRespondingTeamId}
+            viewMode={viewMode}
+          />
+        )}
+
+        {activeSession.gameType === 'card_matching' && activeSession.cardMatchingState && (
+          <CardMatchingGame
+            session={activeSession}
+            cardMatchingState={activeSession.cardMatchingState}
+            onEvaluateMatch={handleEvaluateCardMatch}
+            selectedRespondingTeamId={cardTurnTeamId}
+            viewMode={viewMode}
+          />
+        )}
+      </>
+    );
+  };
+
   // Next Question
   const handleNextQuestion = () => {
     if (!activeSession) return;
@@ -1614,35 +1709,7 @@ export default function App() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 xl:gap-6 items-start">
                 {(gameViewMode === 'split' || gameViewMode === 'board_only') && (
                   <div className={`${gameViewMode === 'split' ? 'lg:col-span-7 xl:col-span-7 2xl:col-span-7' : 'lg:col-span-12'} space-y-3 min-w-0`}>
-                    {activeSession.gameType === 'bingo' && activeSession.bingoState && (
-                      <BingoGame
-                        session={activeSession}
-                        bingoState={activeSession.bingoState}
-                        onClaimTile={handleClaimBingoTile}
-                        selectedRespondingTeamId={selectedRespondingTeamId}
-                        viewMode={gameViewMode}
-                      />
-                    )}
-
-                    {activeSession.gameType === 'snakes_ladders' && activeSession.snakesLaddersState && (
-                      <SnakesLaddersGame
-                        session={activeSession}
-                        snakesLaddersState={activeSession.snakesLaddersState}
-                        onPawnMove={handlePawnMove}
-                        selectedRespondingTeamId={selectedRespondingTeamId}
-                        viewMode={gameViewMode}
-                      />
-                    )}
-
-                    {activeSession.gameType === 'card_matching' && activeSession.cardMatchingState && (
-                      <CardMatchingGame
-                        session={activeSession}
-                        cardMatchingState={activeSession.cardMatchingState}
-                        onEvaluateMatch={handleEvaluateCardMatch}
-                        selectedRespondingTeamId={cardTurnTeamId}
-                        viewMode={gameViewMode}
-                      />
-                    )}
+                    {!isQuestionModalOpen && renderGameBoard(gameViewMode)}
                   </div>
                 )}
 
@@ -1660,7 +1727,7 @@ export default function App() {
                         const updated = { ...activeSession, activeQuestionId: qId };
                         updateSessionState(updated);
                       }}
-                      onOpenFullscreenModal={() => setIsQuestionModalOpen(true)}
+                      onOpenFullscreenModal={openProjectorMode}
                       onRequestFinishGame={() => setIsConfirmFinishModalOpen(true)}
                       isScoringLocked={isScoringLocked}
                     />
@@ -1738,7 +1805,7 @@ export default function App() {
       {activeSession && activeSession.status !== 'completed' && (
         <QuestionModal
           isOpen={isQuestionModalOpen}
-          onClose={() => setIsQuestionModalOpen(false)}
+          onClose={closeProjectorMode}
           session={activeSession}
           activeQuestion={
             activeSession.questions.find((q) => q.id === activeSession.activeQuestionId) ||
@@ -1749,16 +1816,17 @@ export default function App() {
             const updated = { ...activeSession, activeQuestionId: qId };
             updateSessionState(updated);
           }}
-          onCorrectAnswer={(tId) => {
-            handleCorrectAnswer(tId);
-            setIsQuestionModalOpen(false);
-          }}
+          onCorrectAnswer={handleCorrectAnswer}
           onWrongAnswer={(tId) => {
             handleWrongAnswer(tId);
           }}
           selectedRespondingTeamId={selectedRespondingTeamId}
           onSelectRespondingTeam={handleSelectRespondingTeam}
           isScoringLocked={isScoringLocked}
+          gameBoard={isQuestionModalOpen ? renderGameBoard('board_only') : null}
+          isActionPending={isBoardActionPending}
+          onNextOpenQuestion={handleNextOpenQuestion}
+          onRequestFinishGame={() => setIsConfirmFinishModalOpen(true)}
         />
       )}
 
