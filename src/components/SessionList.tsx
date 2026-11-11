@@ -268,10 +268,10 @@ export const SessionList: React.FC<SessionListProps> = ({
               <div className="flex items-start gap-3 min-w-0">
                 <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                 <div className="min-w-0">
-                  <h4 className="font-bold text-amber-600 dark:text-amber-400">
+                  <h4 className="font-bold text-amber-800 dark:text-amber-300">
                     {t('guestBannerTitle')}
                   </h4>
-                  <p className="text-amber-700/90 dark:text-amber-300/90 mt-0.5 leading-relaxed text-xs">
+                  <p className="text-amber-900 dark:text-amber-200 mt-0.5 leading-relaxed text-xs">
                     {t('guestBannerDescSessionList')}
                   </p>
                 </div>
@@ -422,7 +422,7 @@ export const SessionList: React.FC<SessionListProps> = ({
 
                     {/* Guest 24h Expiration Notice */}
                     {isGuestSession(session) && (
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/15 border border-amber-500/40 text-[11px] font-bold text-amber-700 dark:text-amber-300">
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/15 border border-amber-500/40 text-[11px] font-bold text-amber-900 dark:text-amber-200">
                         <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-amber-500" />
                         <span>{t('guestAutoDeleteBadge', { time: formatGuestRemainingTime(getGuestSessionRemainingMs(session), language) })}</span>
                       </div>
@@ -455,7 +455,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                                 >
                                   <span className={`w-2 h-2 border border-black ${tItem.color}`} />
                                   <span className="truncate max-w-[70px]">{tItem.name}</span>
-                                  <span className="opacity-80 font-mono num">({tItem.score} pts)</span>
+                                  <span className="font-mono num">({tItem.score} pts)</span>
                                 </span>
                               ))}
                             </div>
@@ -473,7 +473,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                             </div>
                             <div className="flex items-center justify-between text-[13px]">
                               <span>{t('createdAtLabel')}: {formatDate(session.createdAt)}</span>
-                              <span className="num opacity-80">Limit: {session.timeLimitMinutes || (session.durationPreset === 'quick' ? 5 : 10)} min</span>
+                              <span className="num">Limit: {session.timeLimitMinutes || (session.durationPreset === 'quick' ? 5 : 10)} min</span>
                             </div>
                           </div>
                         </>

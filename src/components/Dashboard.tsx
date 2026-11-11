@@ -161,7 +161,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <p className="text-xs font-bold text-[var(--px-text-muted)] uppercase tracking-wide">
                   {t('dashboardInProgressSessions')}
                 </p>
-                <h3 className="text-2xl sm:text-3xl font-bold num text-amber-500 mt-1">
+                <h3 className="text-2xl sm:text-3xl font-bold num text-amber-700 dark:text-amber-300 mt-1">
                   {inProgressSessions.length}
                 </h3>
               </div>

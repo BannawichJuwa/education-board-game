@@ -62,7 +62,9 @@ export async function api<T = unknown>(path: string, method = 'GET', body?: unkn
     try {
       code = (await res.json()).error || code;
     } catch {
-      /* no json body */
+      // No JSON body. In development the Vite proxy answers 502/500 with plain text when the
+      // Spring Boot backend is not running, so report it as "cannot connect" instead.
+      if (res.status >= 500) code = 'network_error';
     }
     throw new ApiError(res.status, code);
   }

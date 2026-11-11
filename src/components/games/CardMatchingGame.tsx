@@ -152,7 +152,7 @@ export const CardMatchingGame: React.FC<CardMatchingGameProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2 text-xs font-bold text-[var(--px-text-muted)]">
+              <div className="flex items-center gap-2 text-xs font-bold text-[var(--px-text)]">
                 <PixelIcon name="cursor" size={16} />
                 <span>
                   {language === 'en'
@@ -218,7 +218,7 @@ export const CardMatchingGame: React.FC<CardMatchingGameProps> = ({
                       ? 'bg-[var(--color-px-yellow)] border-[var(--px-border)] text-[#2A2350] shadow-[4px_4px_0_var(--px-hard-shadow)] -translate-y-1 ring-3 ring-[var(--color-accent-strong)]'
                       : isClickable
                       ? 'bg-[var(--px-surface-2)] hover:bg-[var(--px-surface-sunken)] border-[var(--px-border)] text-[var(--px-text)] shadow-[3px_3px_0_var(--px-hard-shadow)] hover:-translate-y-0.5 cursor-pointer'
-                      : 'bg-[var(--px-surface-sunken)] border-[var(--px-border-muted)] text-[var(--px-text-muted)] opacity-60 cursor-not-allowed shadow-[1px_1px_0_var(--px-hard-shadow)]'
+                      : 'bg-[var(--px-surface-sunken)] border-[var(--px-border-muted)] text-[var(--px-text)] cursor-not-allowed shadow-[1px_1px_0_var(--px-hard-shadow)]'
                   }`}
                   style={
                     isMatched && matchedPalette
@@ -275,7 +275,7 @@ export const CardMatchingGame: React.FC<CardMatchingGameProps> = ({
                         {getCardDisplayLabel(card, language)}
                       </span>
                     ) : (
-                      <span className="font-pixel text-[10px] text-[var(--px-text-muted)] opacity-60 block">
+                      <span className="font-pixel text-[10px] text-[var(--px-text)] block">
                         ???
                       </span>
                     )}

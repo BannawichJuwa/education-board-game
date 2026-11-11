@@ -412,7 +412,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
                         borderColor: palette.outlineHex,
                         color: isSelected ? '#2A2350' : 'var(--px-text)',
                       }}
-                      className={`px-3 py-2 text-sm font-bold transition flex items-center gap-1.5 border-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`px-3 py-2 text-sm font-bold transition flex items-center gap-1.5 border-3 cursor-pointer disabled:opacity-90 disabled:cursor-not-allowed ${
                         isSelected ? 'shadow-[3px_3px_0_var(--px-hard-shadow)] -translate-y-0.5' : 'hover:bg-[var(--px-surface-sunken)]'
                       }`}
                     >

@@ -36,7 +36,7 @@ const THEME_TOKENS = {
     surface: '#F4F0FF',
     surface2: '#FBF9FF',
     text: '#4A3D8F',
-    textMuted: '#6B5BB5',
+    textMuted: '#5A4BA3',
     border: '#4A3D8F',
     accentStrong: '#D9578F',
     onPastel: '#2A2350',
@@ -67,7 +67,7 @@ const THEME_TOKENS = {
     yellow: '#F0D565',
     mint: '#97D6BF',
     sky: '#95C4E5',
-    error: '#F08D95',
+    error: '#F7A1A8',
     teams: {
       red: '#FF8FA3',
       blue: '#7EC8F8',

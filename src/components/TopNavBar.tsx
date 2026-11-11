@@ -209,7 +209,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
                 {userDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 px-window shadow-[4px_4px_0_var(--px-hard-shadow)] bg-[var(--px-surface)] p-2 space-y-1.5 z-50">
                     <div className="px-2 py-1 text-xs text-[var(--px-text-muted)] font-bold border-b border-[var(--px-border-muted)] flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-[#157F4B]" />
+                      <User className="w-3.5 h-3.5 text-[var(--px-success-text)]" />
                       <span className="truncate">{currentUser.name}</span>
                     </div>
                     {onOpenDashboard && (
@@ -235,7 +235,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
                           onOpenMenu();
                         }
                       }}
-                      className="w-full text-left px-2 py-1.5 text-xs font-bold text-[#B91C47] hover:bg-[#FF8DA1]/20 flex items-center gap-1.5"
+                      className="w-full text-left px-2 py-1.5 text-xs font-bold text-[var(--px-danger-text)] hover:bg-[#FF8DA1]/20 flex items-center gap-1.5"
                     >
                       <LogOut className="w-3.5 h-3.5" />
                       <span>{language === 'en' ? 'Log Out' : 'ออกจากระบบ'}</span>

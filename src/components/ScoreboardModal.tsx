@@ -431,10 +431,10 @@ export const ScoreboardModal: React.FC<ScoreboardModalProps> = ({
                             )}
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 text-center font-bold num text-[#157F4B]">
+                        <td className="py-2.5 px-3 text-center font-bold num text-[var(--px-success-text)]">
                           {team.correctAnswersCount || 0}
                         </td>
-                        <td className="py-2.5 px-3 text-center font-bold num text-[#B91C47]">
+                        <td className="py-2.5 px-3 text-center font-bold num text-[var(--px-danger-text)]">
                           {team.wrongAnswersCount || 0}
                         </td>
                         {session.gameType === 'snakes_ladders' && (

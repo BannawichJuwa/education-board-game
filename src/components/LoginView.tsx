@@ -29,6 +29,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onClose, isModal = false }
   const networkError = language === 'en'
     ? 'Cannot connect to the server. Please check that the backend is running.'
     : 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบว่าเปิด backend แล้ว';
+  const serverError = language === 'en'
+    ? 'The server could not complete the request. Please try again.'
+    : 'เซิร์ฟเวอร์ทำรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
 
   // Mode: if no accounts yet, direct to register, else login
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(() => {
@@ -79,8 +82,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onClose, isModal = false }
           setErrorMessage(networkError);
         } else if (res.error === 'invalid_credentials') {
           setErrorMessage(t('errorInvalidCredentials'));
-        } else {
+        } else if (res.error === 'missing_fields') {
           setErrorMessage(t('errorMissingFields'));
+        } else {
+          setErrorMessage(serverError);
         }
         return;
       }
@@ -132,8 +137,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onClose, isModal = false }
           setErrorMessage(t('errorUsernameShort'));
         } else if (res.error === 'password_too_short') {
           setErrorMessage(t('errorPasswordShort'));
-        } else {
+        } else if (res.error === 'missing_fields') {
           setErrorMessage(t('errorMissingFields'));
+        } else {
+          setErrorMessage(serverError);
         }
         return;
       }

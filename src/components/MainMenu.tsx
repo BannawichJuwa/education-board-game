@@ -98,7 +98,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <button
               type="button"
               onClick={() => handleAction(onResumeGame)}
-              className="px-btn bg-[var(--px-surface)] text-[var(--px-text)] text-xs py-1.5 px-3 flex items-center gap-1.5 border-2 border-[var(--px-border)] shadow-[2px_2px_0_var(--px-hard-shadow)]"
+              className="px-btn px-btn-ink text-xs sm:text-sm py-1.5 px-3.5 flex items-center gap-1.5"
             >
               <PixelIcon name="play" size={12} />
               <span>{t('menuResumeActiveBtn')}</span>
@@ -138,12 +138,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 >
                   <span className="font-bold text-xs text-[#2A2350] leading-tight uppercase">
                     {language === 'en' ? (
-                      <>PLAY.<br />LEARN.<br /><span className="text-[var(--color-accent-strong,#D9578F)]">GROW!</span></>
+                      <>PLAY.<br />LEARN.<br /><span className="text-[#8A1C4E]">GROW!</span></>
                     ) : (
-                      <>เล่นสนุก.<br />ได้ความรู้.<br /><span className="text-[var(--color-accent-strong,#D9578F)]">เติบโต!</span></>
+                      <>เล่นสนุก.<br />ได้ความรู้.<br /><span className="text-[#8A1C4E]">เติบโต!</span></>
                     )}
                   </span>
-                  <Sparkles className="w-3 h-3 text-[var(--color-accent-strong,#D9578F)] mt-0.5" />
+                  <Sparkles className="w-3 h-3 text-[#8A1C4E] mt-0.5" />
                 </div>
 
                 {/* Pixel Window with Cat Room image */}
@@ -216,15 +216,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <span className="font-bold text-xs sm:text-sm text-[#2A2350] leading-tight uppercase">
                   {language === 'en' ? (
                     <>
-                      PLAY.<br />LEARN.<br /><span className="text-[var(--color-accent-strong,#D9578F)]">GROW!</span>
+                      PLAY.<br />LEARN.<br /><span className="text-[#8A1C4E]">GROW!</span>
                     </>
                   ) : (
                     <>
-                      เล่นสนุก.<br />ได้ความรู้.<br /><span className="text-[var(--color-accent-strong,#D9578F)]">เติบโต!</span>
+                      เล่นสนุก.<br />ได้ความรู้.<br /><span className="text-[#8A1C4E]">เติบโต!</span>
                     </>
                   )}
                 </span>
-                <Sparkles className="w-3.5 h-3.5 text-[var(--color-accent-strong,#D9578F)] mt-0.5" />
+                <Sparkles className="w-3.5 h-3.5 text-[#8A1C4E] mt-0.5" />
               </div>
 
               {/* Twinkling Pixel Sparkles around Window */}

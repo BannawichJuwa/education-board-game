@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tailwind `dark:` utilities follow the site Day/Night toggle (data-theme), not the OS setting */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="night"], [data-theme="night"] *));
+
 /*
  * ============================================================================
  * Optional hook for custom Thai pixel font:
@@ -88,7 +91,7 @@
   --px-surface-2: #FBF9FF;
   --px-surface-sunken: #EAE3FC;
   --px-text: #4A3D8F;
-  --px-text-muted: #6B5BB5;
+  --px-text-muted: #5A4BA3;
   --px-border: #4A3D8F;
   --px-border-muted: #6B5BB5;
   --px-hard-shadow: #4A3D8F;
@@ -100,6 +103,10 @@
   --px-mint: #A8E6CF;
   --px-sky: #A8D4F5;
   --px-error: #FF9AA2;
+
+  /* Status text colours for use on surfaces (not on pastel fills) */
+  --px-danger-text: #B91C47;
+  --px-success-text: #157F4B;
 
   /* On-pastel text MUST be dark ink in both themes */
   --px-on-pink: #2A2350;
@@ -158,7 +165,10 @@
   --px-yellow: #F0D565;
   --px-mint: #97D6BF;
   --px-sky: #95C4E5;
-  --px-error: #F08D95;
+  --px-error: #F7A1A8; /* light enough for dark-red #7A1D28 text (AA) */
+
+  --px-danger-text: #FF9AAA;
+  --px-success-text: #7EE2B0;
 
   /* On-pastel text remains dark ink #2A2350 */
   --px-on-pink: #2A2350;
@@ -424,6 +434,31 @@
   [data-theme="night"] .px-btn-danger {
     background-color: #FF6B7A;
     color: #2A050B !important;
+  }
+
+  /* Dark ink button — for placing on pastel/yellow banners (max contrast in both themes) */
+  .px-btn-ink {
+    background-color: #2A2350;
+    color: #FFE36E !important;
+    border-color: #2A2350;
+    box-shadow: 3px 3px 0px rgba(42, 35, 80, 0.45);
+  }
+
+  .px-btn-ink:hover:not(:disabled) {
+    background-color: #3B3270;
+    color: #FFF5B8 !important;
+    box-shadow: 4px 4px 0px rgba(42, 35, 80, 0.45);
+  }
+
+  /* Safety net: a .px-btn placed on a dark surface background must use light text,
+     otherwise the default dark ink (#2A2350) disappears in night mode. */
+  [data-theme="dark"] .px-btn[class*="bg-[var(--px-surface"],
+  [data-theme="night"] .px-btn[class*="bg-[var(--px-surface"],
+  [data-theme="dark"] .px-btn[class*="bg-[var(--color-px-surface"],
+  [data-theme="night"] .px-btn[class*="bg-[var(--color-px-surface"],
+  [data-theme="dark"] .px-btn[class*="bg-[var(--color-px-window"],
+  [data-theme="night"] .px-btn[class*="bg-[var(--color-px-window"] {
+    color: var(--px-text) !important;
   }
 
   /* Timer Control Buttons (Top Bar) */

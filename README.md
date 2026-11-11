@@ -54,6 +54,11 @@ Guest Mode (no login) keeps sessions in the browser only, deleted after 24 hours
 
 Requirements: JDK 17+, Maven, Node.js 20+.
 
+**Windows:** double-click `start-dev.bat`. It opens two windows (backend on 8080, frontend on 3000)
+and then the browser. Log In / Register only work while the backend window is running.
+
+Or start the two parts by hand:
+
 ```bash
 # terminal 1 - backend (http://localhost:8080)
 cd backend

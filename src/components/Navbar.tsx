@@ -214,7 +214,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className="w-full px-2.5 py-1.5 hover:bg-[var(--px-surface-2)] flex items-center justify-between text-left"
                   >
                     <span className="flex items-center gap-2">
-                      {soundOn ? <Volume2 className="w-4 h-4 text-[#157F4B]" /> : <VolumeX className="w-4 h-4 text-[#B91C47]" />}
+                      {soundOn ? <Volume2 className="w-4 h-4 text-[var(--px-success-text)]" /> : <VolumeX className="w-4 h-4 text-[var(--px-danger-text)]" />}
                       <span>{soundOn ? t('taskbarSoundOn') : t('taskbarSoundOff')}</span>
                     </span>
                     <span className="px-badge bg-[var(--px-surface-2)] text-[var(--px-text)] text-[13px] py-0">{soundOn ? 'ON' : 'OFF'}</span>
@@ -366,7 +366,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="p-1.5 bg-[var(--px-surface-2)] hover:bg-[var(--px-surface)] border-2 border-[var(--px-border)] text-[var(--px-text)]"
             title={soundOn ? t('taskbarSoundOn') : t('taskbarSoundOff')}
           >
-            {soundOn ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5 text-[#B91C47]" />}
+            {soundOn ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5 text-[var(--px-danger-text)]" />}
           </button>
 
           {/* Theme Toggle Button (Day / Night) */}

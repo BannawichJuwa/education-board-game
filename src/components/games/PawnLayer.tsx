@@ -937,7 +937,7 @@ export const PawnLayer: React.FC<PawnLayerProps> = ({
                 backgroundColor: palette.hex,
                 borderColor: palette.outlineHex,
               }}
-              className="px-1 py-0 text-[13px] font-bold text-[#4A3D8F] border-2 leading-tight shadow-[1px_1px_0_#4A3D8F] -mt-0.5 max-w-[46px] truncate"
+              className="px-1 py-0 text-[13px] font-bold text-[#2A2350] border-2 leading-tight shadow-[1px_1px_0_#4A3D8F] -mt-0.5 max-w-[46px] truncate"
             >
               {team.name.slice(0, 4)}
             </span>

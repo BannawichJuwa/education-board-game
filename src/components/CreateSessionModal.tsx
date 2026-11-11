@@ -615,10 +615,10 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
             <div className="p-3.5 bg-amber-500/15 border-2 border-amber-500/40 rounded flex items-start gap-3 text-xs sm:text-sm shadow-sm">
               <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-amber-600 dark:text-amber-400">
+                <h4 className="font-bold text-amber-800 dark:text-amber-300">
                   {t('guestBannerTitle')}
                 </h4>
-                <p className="text-amber-700/90 dark:text-amber-300/90 mt-0.5 leading-relaxed text-xs">
+                <p className="text-amber-900 dark:text-amber-200 mt-0.5 leading-relaxed text-xs">
                   {t('guestBannerDescCreate')}
                 </p>
               </div>
@@ -675,7 +675,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                     }`}
                   />
                   {showErrors && isTitleMissing && (
-                    <p className="mt-1 text-xs font-bold text-[#E5484D]">
+                    <p className="mt-1 text-xs font-bold text-[var(--px-danger-text)]">
                       ⚠ {isEn ? 'Session name is required' : 'จำเป็นต้องใส่ชื่อ Session หรือหัวข้อกิจกรรม'}
                     </p>
                   )}
@@ -889,7 +889,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                     />
                   </div>
                   {isTimeInvalid && (
-                    <p className="mt-1 text-xs font-bold text-[#E5484D]">
+                    <p className="mt-1 text-xs font-bold text-[var(--px-danger-text)]">
                       ⚠ {isEn ? 'Enter 1 – 120 minutes' : 'กรุณาใส่เวลา 1 - 120 นาที'}
                     </p>
                   )}
@@ -1276,7 +1276,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
 
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[var(--px-surface-sunken)] border-2 border-[var(--px-border)] shadow-[2px_2px_0_var(--px-hard-shadow)] text-xs font-bold num">
               <span className="text-[var(--px-text-muted)]">
-                {language === 'en' ? 'Current' : 'คำถามปัจจุบัน'}: <strong className="text-[#E0245E]">{filledCount}</strong>
+                {language === 'en' ? 'Current' : 'คำถามปัจจุบัน'}: <strong className="text-[var(--px-danger-text)]">{filledCount}</strong>
               </span>
               <span className="text-[var(--px-text-muted)]">/</span>
               <span className="text-[var(--px-text-muted)]">

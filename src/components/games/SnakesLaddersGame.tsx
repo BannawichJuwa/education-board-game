@@ -473,11 +473,11 @@ export const SnakesLaddersGame: React.FC<SnakesLaddersGameProps> = ({
             <div className="px-window p-4 text-xs text-[var(--px-text)] space-y-2">
               <span className="font-bold block">{language === 'en' ? 'Map Highlights:' : 'ข้อมูลเส้นทางลัด:'}</span>
               <div className="space-y-1.5 text-[13px] font-bold">
-                <div className="flex items-center gap-2 text-[#0E5832]">
+                <div className="flex items-center gap-2 text-[var(--px-success-text)]">
                   <PixelIcon name="ladder" size={14} />
                   <span>{language === 'en' ? 'Ladders: Climb up to shortcut tile' : 'บันได: ปีนขึ้นสู่ช่องทางลัดทันที'}</span>
                 </div>
-                <div className="flex items-center gap-2 text-[#7A1D28]">
+                <div className="flex items-center gap-2 text-[var(--px-danger-text)]">
                   <PixelIcon name="snake" size={14} />
                   <span>{language === 'en' ? 'Snakes: Slide down backward' : 'งูพิษ: เลื่อนถอยหลังลงมาที่หางงู'}</span>
                 </div>

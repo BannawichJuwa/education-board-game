@@ -73,7 +73,7 @@ export const ConfirmFinishGameModal: React.FC<ConfirmFinishGameModalProps> = ({
               <p>
                 {t('finishWarningBody')}
               </p>
-              <p className="text-[13px] opacity-90">
+              <p className="text-[13px]">
                 {language === 'en'
                   ? 'Upon confirmation, results will be saved and you will leave the active game with 2 options: Return to Menu, or View Saved Sessions.'
                   : 'เมื่อยืนยันแล้ว ระบบจะบันทึกผลและออกจากหน้าเกมทันที โดยจะมีเพียง 2 ตัวเลือก คือ กลับไปในหน้าเมนู หรือ ดู session ที่สร้าง'}
