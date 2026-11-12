@@ -23,7 +23,7 @@ Three games: **Classroom Bingo**, **Snakes & Ladders**, and **Card Matching**.
 | Database | MySQL on Google Cloud SQL (deployment) / H2 embedded (local) |
 | Deployment | Google Cloud Run + Cloud SQL |
 
-**Live site:** https://YOUR-CLOUD-RUN-URL (see [DEPLOY.md](DEPLOY.md))
+**Live site:** https://eduboard-798471611335.us-central1.run.app (deployment steps: [DEPLOY.md](DEPLOY.md))
 
 ## Database (10 tables)
 
