@@ -27,6 +27,7 @@ export const QuestionControlPanel: React.FC<QuestionControlPanelProps> = ({
   onWrongAnswer,
   onNextQuestion,
   onPrevQuestion,
+  onSelectQuestion,
   onOpenFullscreenModal,
   onRequestFinishGame,
   isGameEvaluating = false,
@@ -50,6 +51,14 @@ export const QuestionControlPanel: React.FC<QuestionControlPanelProps> = ({
           session.awardedQuestionIds?.includes(activeQuestion.id)
       )
     : false;
+
+  // Next question that has not been scored yet (forward first, then from the start).
+  const isAwarded = (id: string) =>
+    Boolean(session.usedQuestionIds?.includes(id) || session.awardedQuestionIds?.includes(id));
+  const nextOpenQuestion =
+    questions.slice(activeIndex + 1).find((q) => !isAwarded(q.id)) ||
+    questions.slice(0, Math.max(activeIndex, 0)).find((q) => !isAwarded(q.id));
+  const allQuestionsUsed = questions.length > 0 && !nextOpenQuestion && isQuestionAwarded;
 
   const categoryDisplay = activeQuestion?.category
     ? activeQuestion.category.toLowerCase() === 'general' ||
@@ -125,7 +134,7 @@ export const QuestionControlPanel: React.FC<QuestionControlPanelProps> = ({
         </div>
 
         {/* Already Scored Alert Banner */}
-        {isQuestionAwarded && (
+        {isQuestionAwarded && !allQuestionsUsed && (
           <div className="p-2.5 bg-[var(--color-px-mint)] border-2 border-[var(--px-border)] text-[#2A2350] text-xs font-bold flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <PixelIcon name="check" size={16} />
@@ -133,10 +142,31 @@ export const QuestionControlPanel: React.FC<QuestionControlPanelProps> = ({
             </div>
             <button
               type="button"
-              onClick={onNextQuestion}
+              onClick={() => (nextOpenQuestion ? onSelectQuestion(nextOpenQuestion.id) : onNextQuestion())}
               className="px-btn py-1 px-2.5 text-xs flex-shrink-0 cursor-pointer"
             >
               <span>{t('nextQuestionBtn')} ➔</span>
+            </button>
+          </div>
+        )}
+
+        {/* Every question has been scored: the only way forward is to finish the game */}
+        {allQuestionsUsed && (
+          <div className="p-2.5 bg-[var(--color-px-yellow,#FFE57A)] border-2 border-[var(--px-border)] text-[#2A2350] text-xs font-bold flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <PixelIcon name="trophy" size={16} />
+              <span>
+                {language === 'en'
+                  ? 'All questions have been answered! Finish the game to see the results.'
+                  : 'ตอบคำถามครบทุกข้อแล้ว! กดจบเกมเพื่อดูผลการแข่งขัน'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={onRequestFinishGame}
+              className="px-btn px-btn-pink py-1 px-2.5 text-xs flex-shrink-0 cursor-pointer"
+            >
+              <span>{t('finishGameBtn')}</span>
             </button>
           </div>
         )}

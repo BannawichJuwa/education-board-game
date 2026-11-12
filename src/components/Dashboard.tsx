@@ -204,7 +204,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className="px-btn px-4 py-3 flex items-center justify-center gap-2 text-sm font-bold shadow-[3px_3px_0_var(--px-hard-shadow)]"
               >
                 <Plus className="w-4 h-4" />
-                <span>+ {t('dashboardCreateGame')}</span>
+                <span>{t('dashboardCreateGame')}</span>
               </button>
 
               {/* Action 2: Session Library */}

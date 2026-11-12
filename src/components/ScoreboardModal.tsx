@@ -227,7 +227,7 @@ export const ScoreboardModal: React.FC<ScoreboardModalProps> = ({
                   {session.gameType === 'bingo' ? 'BINGO' : session.gameType === 'snakes_ladders' ? 'SNAKES & LADDERS' : 'CARD MATCHING'}
                 </span>
                 <span className="px-badge bg-[var(--px-sky)] text-xs font-bold text-[var(--px-on-sky)]">
-                  {session.durationPreset === 'quick' ? 'QUICK (5m)' : 'STANDARD (10m)'}
+                  {session.durationPreset === 'quick' ? (language === 'en' ? 'QUICK BOARD' : 'กระดานแบบเร็ว') : (language === 'en' ? 'STANDARD BOARD' : 'กระดานมาตรฐาน')}
                 </span>
                 <h2 className="text-xl sm:text-2xl font-pixel font-bold mt-1 text-[var(--px-text)]">
                   {session.title}

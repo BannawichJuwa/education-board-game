@@ -175,7 +175,15 @@ export default function App() {
       });
     }, 1000);
 
-    return () => clearInterval(timerInterval);
+    return () => {
+      clearInterval(timerInterval);
+      // Leaving the game screen: save the exact remaining time (the ticker only saves every 5 s)
+      setSessions((prevSessions) => {
+        const session = prevSessions.find((s) => s.id === activeSessionId);
+        if (session && session.status === 'in_progress') saveSingleSession(session);
+        return prevSessions;
+      });
+    };
   }, [currentView, activeSessionId]);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) || null;
@@ -1043,6 +1051,7 @@ export default function App() {
         territoryMode: nextTerritoryMode,
       },
       status: isGameCompleted ? 'completed' : activeSession.status,
+      endReason: isGameCompleted ? (isBingoWinner ? 'bingo_line' : 'bingo_territory') : activeSession.endReason,
       completedAt: isGameCompleted ? Date.now() : activeSession.completedAt,
       isTimerRunning: isGameCompleted ? false : activeSession.isTimerRunning,
       eventLogs: [...newLogs, ...activeSession.eventLogs],
@@ -1153,6 +1162,7 @@ export default function App() {
         lastMove,
       },
       status: isWinner ? 'completed' : activeSession.status,
+      endReason: isWinner ? 'snakes_finish' : activeSession.endReason,
       completedAt: isWinner ? Date.now() : activeSession.completedAt,
       isTimerRunning: isWinner ? false : activeSession.isTimerRunning,
       eventLogs: [log, ...activeSession.eventLogs],

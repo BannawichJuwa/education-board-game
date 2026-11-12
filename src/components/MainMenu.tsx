@@ -395,7 +395,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     <span className="font-bold">{t('cardMatchingTitle')}</span>
                   </div>
                   <span className="text-[13px] px-1.5 py-0.5 bg-[var(--px-surface-2)] text-[var(--px-text)] border border-[var(--px-border)] font-bold">
-                    12 / 16
+                    4x5 / 5x6
                   </span>
                 </div>
                 <div className="p-5 space-y-3">
