@@ -168,8 +168,8 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
                   </div>
                   <p className="text-xs text-[var(--px-text-muted)] leading-relaxed">
                     {isEn 
-                      ? 'The mascot hops tile-by-tile according to the dice face (1-6) and earns progression points for every step forward.' 
-                      : 'ตัวหมากแมวของทีมจะกระโดดไปข้างหน้าทีละช่องตามแต้มลูกเต๋า (1-6) พร้อมรับคะแนนการเดินตามช่อง'}
+                      ? 'The mascot hops tile-by-tile according to the dice face (1-6). The team also keeps the points of the question it answered.' 
+                      : 'ตัวหมากแมวของทีมจะกระโดดไปข้างหน้าทีละช่องตามแต้มลูกเต๋า (1-6) และทีมได้คะแนนตามคำถามที่ตอบถูก'}
                   </p>
                 </div>
 
@@ -192,8 +192,8 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
                   </div>
                   <p className="text-xs text-[var(--px-text-muted)] leading-relaxed">
                     {isEn 
-                      ? 'The first team whose mascot reaches or exceeds the final GOAL tile wins Level Clear & Victory!' 
-                      : 'ทีมแรกที่สามารถเดินหมากไปถึงช่อง GOAL (เส้นชัย) จะเป็นผู้ชนะเกมทันที! (Quick 30 ช่อง / Standard 50 ช่อง)'}
+                      ? 'The first team whose mascot reaches the final GOAL tile gets +30 bonus points and wins! (Quick 30 tiles / Standard 36 tiles)' 
+                      : 'ทีมแรกที่เดินหมากถึงช่อง GOAL (เส้นชัย) ได้โบนัส +30 คะแนนและชนะทันที! (แบบเร็ว 30 ช่อง / แบบมาตรฐาน 36 ช่อง)'}
                   </p>
                 </div>
               </div>
@@ -316,8 +316,8 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
                   </div>
                   <p className="text-xs text-[var(--px-text-muted)] leading-relaxed">
                     {isEn 
-                      ? 'If the cards do not match, they automatically flip back after 1.3 seconds so all teams can memorize the positions.' 
-                      : 'หากการ์ดทั้งสองใบไม่ตรงกัน การ์ดจะพลิกคว่ำกลับอัตโนมัติใน 1.3 วินาที เพื่อให้ทุกทีมช่วยกันจำตำแหน่ง'}
+                      ? 'If the cards do not match, they automatically flip back after about 1.5 seconds so all teams can memorize the positions.' 
+                      : 'หากการ์ดทั้งสองใบไม่ตรงกัน การ์ดจะพลิกคว่ำกลับอัตโนมัติในประมาณ 1.5 วินาที เพื่อให้ทุกทีมช่วยกันจำตำแหน่ง'}
                   </p>
                 </div>
 
@@ -355,7 +355,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
               <div className="space-y-2.5">
                 <div className="p-3 bg-[var(--px-surface-2)] border-2 border-[var(--px-border)] flex items-start gap-3">
                   <span className="p-1 bg-[var(--px-yellow)] text-[#2A2350] border border-[var(--px-border)] font-bold text-xs mt-0.5">
-                    1 จอ
+                    {isEn ? '1 Screen' : '1 จอ'}
                   </span>
                   <div>
                     <h4 className="font-bold text-xs sm:text-sm text-[var(--px-text)]">
@@ -371,7 +371,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
 
                 <div className="p-3 bg-[var(--px-surface-2)] border-2 border-[var(--px-border)] flex items-start gap-3">
                   <span className="p-1 bg-[var(--px-sky)] text-[#2A2350] border border-[var(--px-border)] font-bold text-xs mt-0.5">
-                    ยกมือ
+                    {isEn ? 'Hands Up' : 'ยกมือ'}
                   </span>
                   <div>
                     <h4 className="font-bold text-xs sm:text-sm text-[var(--px-text)]">
@@ -387,7 +387,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
 
                 <div className="p-3 bg-[var(--px-surface-2)] border-2 border-[var(--px-border)] flex items-start gap-3">
                   <span className="p-1 bg-[var(--px-mint)] text-[#2A2350] border border-[var(--px-border)] font-bold text-xs mt-0.5">
-                    รายงาน
+                    {isEn ? 'Report' : 'รายงาน'}
                   </span>
                   <div>
                     <h4 className="font-bold text-xs sm:text-sm text-[var(--px-text)]">
