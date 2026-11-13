@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
+<!-- Sitemap of the Educational Board Games web app.
+     <loc>, <lastmod>, <changefreq> and <priority> follow the sitemaps.org protocol.
+     <page:info> describes the page and every function on it (search engines ignore it).
+     /game/{sessionId} and /scoreboard/{sessionId} are per session, so they are listed as
+     sub-pages of /sessions instead of as <url> entries. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:page="https://eduboard-798471611335.us-central1.run.app/schemas/page-functions"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd https://eduboard-798471611335.us-central1.run.app/schemas/page-functions https://eduboard-798471611335.us-central1.run.app/schemas/page-functions.xsd">
+  <url>
+    <loc>https://eduboard-798471611335.us-central1.run.app/</loc>
+    <lastmod>2026-11-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <page:info>
+      <page:name>Main Menu (Home)</page:name>
+      <page:type>Page</page:type>
+      <page:access>Everyone (start page for guests)</page:access>
+      <page:fr>FR-02</page:fr>
+      <page:function>Hero section with Create Game and View Saved Sessions buttons</page:function>
+      <page:function>Choose one of the 3 games: Snakes &amp; Ladders, Classroom Bingo, Card Matching</page:function>
+      <page:function>Resume the active session (shown when a game is in progress)</page:function>
+    </page:info>
+    <page:everyPage>
+      <page:function>Top navigation bar: Home / Dashboard, Create Game, Saved Sessions, How to Play, Day / Night theme, TH / EN language, Log In or account name</page:function>
+      <page:function>Taskbar: Start menu, Back, Desktop, Explorer, New Session, Aa font sample, sound on / off, hide bar</page:function>
+    </page:everyPage>
+  </url>
+  <url>
+    <loc>https://eduboard-798471611335.us-central1.run.app/login</loc>
+    <lastmod>2026-11-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <page:info>
+      <page:name>Login / Register (and Account Profile)</page:name>
+      <page:type>Page</page:type>
+      <page:access>Everyone</page:access>
+      <page:ui>UI-01, UI-02</page:ui>
+      <page:fr>FR-01</page:fr>
+      <page:function>Log In tab: username and password with a show / hide button</page:function>
+      <page:function>Register tab: full name, username, password and confirm password (username at least 3 characters, password at least 4)</page:function>
+      <page:function>After login the Teacher Dashboard opens; sessions are then saved in the database</page:function>
+      <page:function>When logged in this page shows the Account Profile: name, member since, last login</page:function>
+      <page:function>Log Out with confirmation (back to Guest Mode)</page:function>
+      <page:function>Delete Account: asks for the password and deletes the account and all its data</page:function>
+    </page:info>
+  </url>
+  <url>
+    <loc>https://eduboard-798471611335.us-central1.run.app/dashboard</loc>
+    <lastmod>2026-11-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <page:info>
+      <page:name>Teacher Dashboard</page:name>
+      <page:type>Page</page:type>
+      <page:access>Logged-in teachers (start page after login)</page:access>
+      <page:fr>FR-01, FR-07</page:fr>
+      <page:function>Counters: total sessions, in progress, completed</page:function>
+      <page:function>Quick actions: Create Game, Saved Sessions, How to Play, Resume Latest Game</page:function>
+      <page:function>Recent sessions: Continue Playing (in progress) or View Scoreboard (completed)</page:function>
+    </page:info>
+  </url>
+  <url>
+    <loc>https://eduboard-798471611335.us-central1.run.app/sessions</loc>
+    <lastmod>2026-11-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <page:info>
+      <page:name>Saved Sessions</page:name>
+      <page:type>Page</page:type>
+      <page:access>Everyone (guest sessions are deleted after 24 hours)</page:access>
+      <page:ui>UI-11, UI-12</page:ui>
+      <page:fr>FR-07</page:fr>
+      <page:function>Guest Mode banner: data is deleted after 24 hours, time left, Log In link</page:function>
+      <page:function>Search by session title or subject</page:function>
+      <page:function>Filter tabs: All, In Progress, Completed</page:function>
+      <page:function>Session card: Continue Playing (in progress) opens /game/{sessionId}</page:function>
+      <page:function>Session card: View Scoreboard (completed) opens /scoreboard/{sessionId}</page:function>
+      <page:function>Session card: Restart Game and Delete, each with a confirmation window (UI-12)</page:function>
+      <page:function>Backup (JSON) downloads all sessions; Import loads a JSON backup</page:function>
+      <page:subpage path="/game/{sessionId}">
+        <page:name>Game Screen</page:name>
+        <page:type>Page</page:type>
+        <page:ui>UI-06 – UI-10, UI-12, UI-13, UI-14</page:ui>
+        <page:fr>FR-05, FR-06, FR-07, FR-08</page:fr>
+        <page:function>Toolbar: Back, Split / Fullscreen view, Restart Game, Save / End Game, Delete</page:function>
+        <page:function>Timer: pause / resume, +1 minute, reset; Game Time Is Up banner with +1 Minute or Save / End Game (UI-07)</page:function>
+        <page:function>Question panel: question, Show Answer, previous / next question, choose the first hand-raised team, Correct / Incorrect (UI-06)</page:function>
+        <page:function>Projector Mode: the question in full screen for the class</page:function>
+        <page:function>Board: Classroom Bingo tile claiming (UI-08), Snakes &amp; Ladders dice and moves (UI-09), Card Matching pairs (UI-10)</page:function>
+        <page:function>Pop-up Save Session or End Game (UI-13): Save Session keeps the game in progress and opens /sessions; Save and End Game completes it</page:function>
+        <page:function>Pop-up Victory Celebration (UI-14): winner, or DRAW with co-champions; View Scoreboard or Return to Menu</page:function>
+      </page:subpage>
+      <page:subpage path="/scoreboard/{sessionId}">
+        <page:name>Scoreboard &amp; Report</page:name>
+        <page:type>Pop-up window</page:type>
+        <page:ui>UI-15</page:ui>
+        <page:fr>FR-08</page:fr>
+        <page:function>Match outcome: Winner or DRAW / Co-Champions</page:function>
+        <page:function>Overview: top team, class accuracy, total points, time played</page:function>
+        <page:function>Podium and standings with standard competition ranking (1, 1, 3) and Tie tags</page:function>
+        <page:function>Correct, incorrect and total score of every team</page:function>
+        <page:function>Score chart and event timeline with a team filter</page:function>
+        <page:function>Export CSV (UTF-8 with BOM) and Print Report</page:function>
+      </page:subpage>
+    </page:info>
+  </url>
+  <url>
+    <loc>https://eduboard-798471611335.us-central1.run.app/create</loc>
+    <lastmod>2026-11-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <page:info>
+      <page:name>Create Session Wizard</page:name>
+      <page:type>Pop-up window</page:type>
+      <page:access>Everyone</page:access>
+      <page:ui>UI-03, UI-04, UI-05</page:ui>
+      <page:fr>FR-02, FR-03, FR-04</page:fr>
+      <page:function>Step 1 Game Setup: session title, subject, game, Quick or Standard board, time limit (5, 10, 15, 20 or 1–120 minutes)</page:function>
+      <page:function>Step 2 Teams &amp; Roster: 2 to 6 teams and the student names of each team</page:function>
+      <page:function>Step 3 Questions: load sample questions, add, edit or delete questions with points, answer and category</page:function>
+      <page:function>Save to Saved Sessions, or Create &amp; Start Game (opens /game/{sessionId})</page:function>
+    </page:info>
+  </url>
+  <url>
+    <loc>https://eduboard-798471611335.us-central1.run.app/how-to-play</loc>
+    <lastmod>2026-11-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <page:info>
+      <page:name>How to Play</page:name>
+      <page:type>Pop-up window</page:type>
+      <page:access>Everyone</page:access>
+      <page:function>Rules of Classroom Bingo, Snakes &amp; Ladders and Card Matching</page:function>
+      <page:function>Steps for the teacher: create, judge answers, finish and export</page:function>
+    </page:info>
+  </url>
+</urlset>

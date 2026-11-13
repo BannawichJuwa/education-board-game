@@ -22,8 +22,9 @@ import {
 import { useLanguage } from './context/LanguageContext';
 import { GAME_RULES } from './config/gameRules';
 import { 
-  canAnyTeamStillComplete, getTerritoryStats, rankTeamsByBingoTerritory 
+  canAnyTeamStillComplete, getTerritoryStats
 } from './utils/bingoUtils';
+import { getWinnerTeams, joinTeamNames } from './utils/ranking';
 import { PixelIcon } from './components/PixelIcon';
 
 // Components
@@ -54,6 +55,7 @@ export default function App() {
   const { currentUser } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [sessionsReady, setSessionsReady] = useState(false); // sessions loaded (server or browser)
   const [currentView, setCurrentView] = useState<'menu' | 'dashboard' | 'game' | 'sessions' | 'login'>(() => {
     try {
       const savedUser = localStorage.getItem('eduboard.user');
@@ -132,11 +134,14 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) {
       setSessions(removeTeacherSessions());
+      setSessionsReady(true);
       return;
     }
+    setSessionsReady(false);
     fetchServerSessions(currentUser.id)
       .then((serverSessions) => setSessions(replaceTeacherSessions(serverSessions)))
-      .catch((e) => console.error('Could not load sessions from the server', e));
+      .catch((e) => console.error('Could not load sessions from the server', e))
+      .finally(() => setSessionsReady(true));
   }, [currentUser?.id]);
 
   // Cleanup any pending mismatch timeout on unmount
@@ -187,6 +192,73 @@ export default function App() {
   }, [currentView, activeSessionId]);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) || null;
+
+  // ------------------------------------------------------------------ URL routing
+  // Every page and pop-up has its own address so the browser Back button, bookmarks and
+  // sitemap.xml work: / · /login · /dashboard · /sessions · /create · /how-to-play ·
+  // /game/{sessionId} · /scoreboard/{sessionId}. Spring Boot sends these paths to index.html.
+  const [pendingScoreboardId, setPendingScoreboardId] = useState<string | null>(null);
+  const [routeReady, setRouteReady] = useState(false);
+  const firstUrlSyncRef = React.useRef(true);
+
+  const applyPath = React.useCallback((pathname: string) => {
+    const parts = pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+    const [first, id] = parts;
+    setIsCreateModalOpen(first === 'create');
+    setIsHowToPlayOpen(first === 'how-to-play');
+    if (first !== 'scoreboard') {
+      setIsScoreboardModalOpen(false);
+      setSelectedSessionForScoreboard(null);
+    }
+    if (first === 'login') setCurrentView('login');
+    else if (first === 'dashboard') setCurrentView('dashboard');
+    else if (first === 'sessions') setCurrentView('sessions');
+    else if (first === 'game' && id) { setActiveSessionId(id); setCurrentView('game'); }
+    else if (first === 'scoreboard' && id) { setCurrentView('sessions'); setPendingScoreboardId(id); }
+    else if (first !== 'create' && first !== 'how-to-play') setCurrentView((v) => (v === 'login' || v === 'sessions' || v === 'game' ? 'menu' : v));
+  }, []);
+
+  // Open the address typed in the browser, and follow the Back / Forward buttons
+  useEffect(() => {
+    applyPath(window.location.pathname);
+    setRouteReady(true);
+    const onPop = () => applyPath(window.location.pathname);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [applyPath]);
+
+  // /scoreboard/{id}: open it once the session has been loaded
+  useEffect(() => {
+    if (!pendingScoreboardId) return;
+    const target = sessions.find((s) => s.id === pendingScoreboardId);
+    if (target) {
+      setPendingScoreboardId(null);
+      setIsPostGameCompleted(false);
+      setSelectedSessionForScoreboard(target);
+      setIsScoreboardModalOpen(true);
+    } else if (sessionsReady) {
+      setPendingScoreboardId(null);
+    }
+  }, [pendingScoreboardId, sessions, sessionsReady]);
+
+  // Keep the address bar in step with what is on screen
+  useEffect(() => {
+    if (!routeReady || pendingScoreboardId) return;
+    let path = '/';
+    if (isScoreboardModalOpen && selectedSessionForScoreboard) path = `/scoreboard/${selectedSessionForScoreboard.id}`;
+    else if (isCreateModalOpen) path = '/create';
+    else if (isHowToPlayOpen) path = '/how-to-play';
+    else if (currentView === 'game') path = activeSessionId ? `/game/${activeSessionId}` : '/sessions';
+    else if (currentView === 'sessions') path = '/sessions';
+    else if (currentView === 'login') path = '/login';
+    else if (currentView === 'dashboard') path = currentUser ? '/dashboard' : '/';
+    if (window.location.pathname !== path) {
+      // the first correction (e.g. / -> /dashboard after login) replaces the address instead of adding a Back step
+      if (firstUrlSyncRef.current) window.history.replaceState(null, '', path);
+      else window.history.pushState(null, '', path);
+    }
+    firstUrlSyncRef.current = false;
+  }, [routeReady, currentView, activeSessionId, isCreateModalOpen, isHowToPlayOpen, isScoreboardModalOpen, selectedSessionForScoreboard, pendingScoreboardId, currentUser]);
 
   // A new question or another session ends the card-flipping turn
   useEffect(() => {
@@ -399,53 +471,70 @@ export default function App() {
     setSelectedRespondingTeamId(null);
   };
 
-  // Finish active session
+  // UI-13 option 1: save the session to resume later (status stays in_progress)
+  const handleSaveSessionForLater = () => {
+    if (!activeSession) return;
+    const now = Date.now();
+    const savedSession: Session = {
+      ...activeSession,
+      status: 'in_progress',
+      isTimerRunning: false,
+      updatedAt: now,
+    };
+    updateSessionState(savedSession);
+    setRecentlySavedSessionId(savedSession.id);
+    setSessionSaveNotification(language === 'en'
+      ? `Session "${savedSession.title}" was saved. Press "Continue Playing" to resume it later.`
+      : `บันทึก Session "${savedSession.title}" เรียบร้อยแล้ว กด "เล่นต่อ" เพื่อกลับมาเล่นต่อภายหลัง`);
+    setCurrentView('sessions');
+    setActiveSessionId(null);
+    setSelectedRespondingTeamId(null);
+  };
+
+  // UI-13 option 2: save and end the game, then open the scoreboard (UI-15)
   const handleFinishActiveSession = () => {
     if (!activeSession) return;
-    const sortedByScore = [...activeSession.teams].sort((a, b) => b.score - a.score);
     const now = Date.now();
 
     let winReason: WinReason = 'highest_score';
-    let winnerTeam = sortedByScore[0];
-    let finishDetails = language === 'en'
-      ? `Game finished! Winner: ${winnerTeam?.name} with ${winnerTeam?.score} pts.`
-      : `อาจารย์ประกาศจบเกม ทีมชนะเลิศคือ ${winnerTeam?.name} ด้วยคะแนน ${winnerTeam?.score} แต้ม`;
-
     if (activeSession.gameType === 'bingo' && activeSession.bingoState) {
-      const hasLineWinner = Boolean(activeSession.bingoState.winnerTeamId);
-      if (hasLineWinner) {
-        winReason = 'bingo_line';
-        winnerTeam = activeSession.teams.find((tItem) => tItem.id === activeSession.bingoState?.winnerTeamId) || sortedByScore[0];
-      } else {
-        // Territory Mode ranking: tilesHeld -> largestConnectedRegion -> quiz score
-        winReason = 'bingo_territory';
-        const territoryRanked = rankTeamsByBingoTerritory(activeSession.bingoState, activeSession.teams);
-        winnerTeam = territoryRanked[0] || sortedByScore[0];
-        const tStats = getTerritoryStats(activeSession.bingoState, activeSession.teams);
-        const winStat = winnerTeam ? tStats[winnerTeam.id] : undefined;
-        finishDetails = language === 'en'
-          ? `Bingo ended with no line winner — Territory Mode! ${winnerTeam?.name} wins with ${winStat?.tilesHeld ?? 0} tiles held (largest region: ${winStat?.largestConnectedRegion ?? 0}, quiz score: ${winnerTeam?.score ?? 0}).`
-          : `จบเกมบิงโกในโหมดยึดพื้นที่ (Territory Mode) — ทีมชนะเลิศคือ ${winnerTeam?.name} ยึดได้ ${winStat?.tilesHeld ?? 0} ช่อง (กลุ่มติดกันใหญ่สุด ${winStat?.largestConnectedRegion ?? 0} ช่อง, คะแนนคำถาม ${winnerTeam?.score ?? 0} แต้ม)`;
-      }
+      winReason = activeSession.bingoState.winnerTeamId ? 'bingo_line' : 'bingo_territory';
     } else if (activeSession.gameType === 'snakes_ladders') {
       const hasFinishWinner = activeSession.teams.some(
         (tItem) => (tItem.pawnPosition || 1) >= (activeSession.snakesLaddersState?.boardSize || 30)
       );
-      winReason = hasFinishWinner ? 'snakes_finish' : 'snakes_score';
-      if (hasFinishWinner && activeSession.snakesLaddersState?.winnerTeamId) {
-        winnerTeam = activeSession.teams.find((tItem) => tItem.id === activeSession.snakesLaddersState?.winnerTeamId) || sortedByScore[0];
-      }
+      winReason = hasFinishWinner && activeSession.snakesLaddersState?.winnerTeamId ? 'snakes_finish' : 'snakes_score';
     } else if (activeSession.gameType === 'card_matching') {
       const expectedTotal = activeSession.cardMatchingState?.totalPairs || (activeSession.durationPreset === 'quick' ? 10 : 15);
       const allMatched = (activeSession.cardMatchingState?.matchedPairsCount || 0) >= expectedTotal;
       winReason = allMatched ? 'cards_all_matched' : 'cards_score';
     }
 
+    // Rankings with ties (1, 1, 3): every team in first place is a winner
+    const winners = getWinnerTeams(activeSession);
+    const isTie = winners.length > 1;
+    const lead = winners[0];
+    let finishDetails: string;
+    if (isTie) {
+      finishDetails = language === 'en'
+        ? `Game finished in a tie! Co-champions: ${joinTeamNames(winners)} (${lead?.score ?? 0} pts each).`
+        : `จบเกมด้วยผลเสมอ! ทีมชนะเลิศร่วม: ${joinTeamNames(winners)} (ทีมละ ${lead?.score ?? 0} แต้ม)`;
+    } else if (winReason === 'bingo_territory' && activeSession.bingoState && lead) {
+      const winStat = getTerritoryStats(activeSession.bingoState, activeSession.teams)[lead.id];
+      finishDetails = language === 'en'
+        ? `Bingo ended with no line winner — Territory Mode! ${lead.name} wins with ${winStat?.tilesHeld ?? 0} tiles held (largest region: ${winStat?.largestConnectedRegion ?? 0}, quiz score: ${lead.score ?? 0}).`
+        : `จบเกมบิงโกในโหมดยึดพื้นที่ (Territory Mode) — ทีมชนะเลิศคือ ${lead.name} ยึดได้ ${winStat?.tilesHeld ?? 0} ช่อง (กลุ่มติดกันใหญ่สุด ${winStat?.largestConnectedRegion ?? 0} ช่อง, คะแนนคำถาม ${lead.score ?? 0} แต้ม)`;
+    } else {
+      finishDetails = language === 'en'
+        ? `Game finished! Winner: ${lead?.name} with ${lead?.score ?? 0} pts.`
+        : `อาจารย์ประกาศจบเกม ทีมชนะเลิศคือ ${lead?.name} ด้วยคะแนน ${lead?.score ?? 0} แต้ม`;
+    }
+
     const finishLog: GameEventLog = {
       id: `log-finish-${now}`,
       timestamp: now,
-      teamId: winnerTeam?.id,
-      teamName: winnerTeam?.name,
+      teamId: isTie ? undefined : lead?.id,
+      teamName: isTie ? joinTeamNames(winners) : lead?.name,
       action: language === 'en' ? 'Session Completed' : 'จบการแข่งขันประจำ Session',
       details: finishDetails,
       type: 'system',
@@ -454,7 +543,7 @@ export default function App() {
     const completedSession: Session = {
       ...activeSession,
       status: 'completed',
-      winnerTeamId: winnerTeam?.id,
+      winnerTeamId: isTie ? undefined : lead?.id,
       endReason: winReason || activeSession.endReason || 'highest_score',
       completedAt: now,
       isTimerRunning: false,
@@ -463,13 +552,14 @@ export default function App() {
     };
 
     updateSessionState(completedSession);
-    setCompletedCelebrationSession(completedSession);
-    setCelebrationWinReason(winReason);
-    setIsCelebrationModalOpen(true);
 
+    // Go to the session list and show the victory page (UI-14); "View Scoreboard" opens UI-15
     setCurrentView('sessions');
     setActiveSessionId(null);
     setSelectedRespondingTeamId(null);
+    setCompletedCelebrationSession(completedSession);
+    setCelebrationWinReason(winReason);
+    setIsCelebrationModalOpen(true);
   };
 
   // TEACHER EVALUATION: Correct Answer
@@ -1015,23 +1105,29 @@ export default function App() {
       playVictorySound();
     } else if (isBoardFull) {
       playVictorySound();
-      const ranked = rankTeamsByBingoTerritory(
-        { ...provisionalBingoState, territoryMode: true },
-        updatedTeams
-      );
-      const territoryWinner = ranked[0];
-      finalWinnerTeamId = territoryWinner?.id;
+      const territoryWinners = getWinnerTeams({
+        ...activeSession,
+        teams: updatedTeams,
+        bingoState: { ...provisionalBingoState, territoryMode: true },
+      });
+      const territoryWinner = territoryWinners[0];
+      const isTerritoryTie = territoryWinners.length > 1;
+      finalWinnerTeamId = isTerritoryTie ? undefined : territoryWinner?.id;
       const stats = getTerritoryStats(provisionalBingoState, updatedTeams);
       const winStat = territoryWinner ? stats[territoryWinner.id] : undefined;
       newLogs.unshift({
         id: `log-territory-finish-${Date.now()}`,
         timestamp: Date.now(),
-        teamId: territoryWinner?.id,
-        teamName: territoryWinner?.name,
+        teamId: isTerritoryTie ? undefined : territoryWinner?.id,
+        teamName: isTerritoryTie ? joinTeamNames(territoryWinners) : territoryWinner?.name,
         action: language === 'en' ? 'Board Full — Territory Victory!' : 'กระดานเต็ม — ชนะด้วยโหมดยึดพื้นที่!',
-        details: language === 'en'
-          ? `All tiles claimed! ${territoryWinner?.name} wins Territory Mode with ${winStat?.tilesHeld ?? 0} tiles (largest region: ${winStat?.largestConnectedRegion ?? 0}).`
-          : `ยึดครบทุกช่องแล้ว! ทีม ${territoryWinner?.name} ชนะด้วยพื้นที่สูงสุด ${winStat?.tilesHeld ?? 0} ช่อง (กลุ่มติดกันใหญ่สุด ${winStat?.largestConnectedRegion ?? 0} ช่อง)`,
+        details: isTerritoryTie
+          ? (language === 'en'
+            ? `All tiles claimed! Territory Mode ends in a tie: ${joinTeamNames(territoryWinners)} share first place (${winStat?.tilesHeld ?? 0} tiles each).`
+            : `ยึดครบทุกช่องแล้ว! โหมดยึดพื้นที่จบด้วยผลเสมอ: ${joinTeamNames(territoryWinners)} ได้อันดับ 1 ร่วมกัน (ทีมละ ${winStat?.tilesHeld ?? 0} ช่อง)`)
+          : (language === 'en'
+            ? `All tiles claimed! ${territoryWinner?.name} wins Territory Mode with ${winStat?.tilesHeld ?? 0} tiles (largest region: ${winStat?.largestConnectedRegion ?? 0}).`
+            : `ยึดครบทุกช่องแล้ว! ทีม ${territoryWinner?.name} ชนะด้วยพื้นที่สูงสุด ${winStat?.tilesHeld ?? 0} ช่อง (กลุ่มติดกันใหญ่สุด ${winStat?.largestConnectedRegion ?? 0} ช่อง)`),
         type: 'system',
       });
     }
@@ -1248,12 +1344,12 @@ export default function App() {
         return tItem;
       });
 
-      const sortedTeams = [...updatedTeams].sort((a, b) => b.score - a.score);
+      const cardWinners = getWinnerTeams({ ...activeSession, teams: updatedTeams });
 
       const updatedSession: Session = {
         ...activeSession,
         teams: updatedTeams,
-        winnerTeamId: isAllMatched ? sortedTeams[0]?.id : activeSession.winnerTeamId,
+        winnerTeamId: isAllMatched ? (cardWinners.length === 1 ? cardWinners[0].id : undefined) : activeSession.winnerTeamId,
         endReason: isAllMatched ? 'cards_all_matched' : activeSession.endReason,
         cardMatchingState: {
           ...currentMatching,
@@ -1955,6 +2051,10 @@ export default function App() {
         session={activeSession}
         isOpen={isConfirmFinishModalOpen}
         onClose={() => setIsConfirmFinishModalOpen(false)}
+        onSaveForLater={() => {
+          handleSaveSessionForLater();
+          setIsConfirmFinishModalOpen(false);
+        }}
         onConfirmFinish={() => {
           handleFinishActiveSession();
           setIsConfirmFinishModalOpen(false);

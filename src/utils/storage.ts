@@ -10,6 +10,7 @@ import {
 import { GAME_RULES } from '../config/gameRules';
 import { scheduleServerSave, deleteServerSession } from '../api/serverSync';
 import { canAnyTeamStillComplete, getTerritoryStats, rankTeamsByBingoTerritory } from './bingoUtils';
+import { rankTeams } from './ranking';
 
 export {
   getTerritoryStats,
@@ -395,14 +396,13 @@ export function exportSessionToCSV(session: Session): void {
       ? getTerritoryStats(session.bingoState, session.teams)
       : null;
 
-  const isBingoNoLine =
-    session.gameType === 'bingo' && !session.bingoState?.winnerTeamId && session.bingoState;
-  const rankedTeams = isBingoNoLine
-    ? rankTeamsByBingoTerritory(session.bingoState!, session.teams)
-    : [...session.teams].sort((a, b) => b.score - a.score);
+  // Standard competition ranking (1, 1, 3); tied teams are marked in the Tie column
+  const standings = rankTeams(session);
 
   const headers = [
     'Rank',
+    'Tie',
+    'Winner',
     'Team Name',
     'Members',
     'Correct Answers',
@@ -414,7 +414,8 @@ export function exportSessionToCSV(session: Session): void {
     'largest_region',
     'territory_score',
   ];
-  const rows = rankedTeams.map((team: Team, idx: number) => {
+  const completed = session.status === 'completed';
+  const rows = standings.map(({ team, rank, isTied }) => {
     const tStat = territoryStats?.[team.id];
     const matches =
       team.matchesFound ??
@@ -431,7 +432,9 @@ export function exportSessionToCSV(session: Session): void {
     const territoryScore = tStat ? tStat.territoryScore : 0;
 
     return [
-      idx + 1,
+      rank,
+      isTied ? 'Tie' : '',
+      completed && rank === 1 ? 'TRUE' : 'FALSE',
       `"${team.name.replace(/"/g, '""')}"`,
       `"${team.students.join('; ').replace(/"/g, '""')}"`,
       team.correctAnswersCount || 0,

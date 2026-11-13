@@ -491,11 +491,16 @@ export const SessionList: React.FC<SessionListProps> = ({
                               playClickSound();
                               onSelectSession(session);
                             }}
+                            id={`continue-session-btn-${session.id}`}
                             className="px-btn px-btn-mint px-2.5 py-1 text-xs flex items-center gap-1 cursor-pointer"
-                            title="Play"
+                            title={session.status === 'in_progress' ? t('continuePlayingBtn') : 'Play'}
                           >
                             <PixelIcon name="play" size={12} />
-                            <span>{language === 'en' ? 'Play' : 'เล่น'}</span>
+                            <span>
+                              {session.status === 'in_progress'
+                                ? t('continuePlayingBtn')
+                                : language === 'en' ? 'Play' : 'เล่น'}
+                            </span>
                           </button>
                         )}
 
@@ -513,6 +518,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                           <span>{t('restartSessionBtn')}</span>
                         </button>
 
+                        {session.status === 'completed' && (
                         <button
                           id={`view-scoreboard-btn-${session.id}`}
                           type="button"
@@ -526,6 +532,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                           <PixelIcon name="trophy" size={12} />
                           <span>{t('viewScoreboardBtn')}</span>
                         </button>
+                        )}
                       </div>
 
                       <button

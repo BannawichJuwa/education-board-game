@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS team (
   team_name  VARCHAR(50) NOT NULL,
   color      VARCHAR(10) NOT NULL,
   team_score INT         NOT NULL DEFAULT 0,
-  is_winner  BOOLEAN     NOT NULL DEFAULT FALSE,     -- TRUE for the winning team of a completed session
+  is_winner  BOOLEAN     NOT NULL DEFAULT FALSE,     -- TRUE for every first-place team of a completed session (2+ TRUE = tie)
   PRIMARY KEY (team_id),
   CONSTRAINT chk_team_color CHECK (color IN ('red','blue','green','orange','purple','pink')),
   CONSTRAINT fk_team_session FOREIGN KEY (session_id)

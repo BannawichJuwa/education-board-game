@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Educational Board Games OS.exe — Y2K Retro Pixel Classroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Mitr:wght@400;500;600&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <meta name="description" content="Interactive digital classroom board game platform 100% controlled by the instructor with Bingo, Snakes & Ladders, and Card Matching games." />
+    <meta property="og:title" content="Educational Board Games OS" />
+    <meta property="og:description" content="Interactive digital classroom board game platform 100% controlled by the instructor with Bingo, Snakes & Ladders, and Card Matching games." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('eduboard.theme') || localStorage.getItem('classroom_theme') || 'auto';
+          var effective = saved;
+          if (saved === 'auto') {
+            effective = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          } else if (saved === 'night') {
+            effective = 'dark';
+          } else if (saved === 'day') {
+            effective = 'light';
+          }
+          document.documentElement.setAttribute('data-theme', effective);
+          document.documentElement.setAttribute('data-theme-mode', saved);
+        } catch (e) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-BCOyAbM0.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D0wn-1KP.css">
+  </head>
+  <body class="min-h-screen antialiased selection:bg-[#FFE36E] selection:text-[#4A3D8F]">
+    <div id="root"></div>
+    <!-- Plain links for crawlers and sitemap generators that do not run JavaScript -->
+    <noscript>
+      <nav aria-label="Site pages">
+        <a href="/">Main Menu</a> · <a href="/login">Login / Register</a> · <a href="/dashboard">Teacher Dashboard</a> ·
+        <a href="/sessions">Saved Sessions</a> · <a href="/create">Create Session</a> · <a href="/how-to-play">How to Play</a> ·
+        <a href="/sitemap.html">Sitemap</a>
+      </nav>
+    </noscript>
+  </body>
+</html>

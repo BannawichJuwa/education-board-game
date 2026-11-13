@@ -9,6 +9,7 @@
  */
 import { Session, Team, UserAccount } from '../types';
 import { DEFAULT_TEAM_PALETTES, getTeamPalette, migrateSession } from '../utils/storage';
+import { getWinnerTeams } from '../utils/ranking';
 import { DB_LIMITS, fit, fitPoints } from '../config/dbLimits';
 
 const TOKEN_KEY = 'education_board_game_token_v3';
@@ -130,12 +131,13 @@ export const toUserAccount = (t: TeacherDto): UserAccount => ({
 
 // ------------------------------------------------------------------ Session <-> API mapping
 
-/** Winning team of a finished game: the team the game declared (winnerTeamId), otherwise the top score. */
+/**
+ * Winning teams of a finished game (IS_WINNER = TRUE): every team in first place.
+ * More than one team means the game ended in a tie (co-champions).
+ */
 function winnerIds(s: Session): Set<string> {
   if (s.status !== 'completed' || s.teams.length === 0) return new Set();
-  if (s.winnerTeamId) return new Set([s.winnerTeamId]);
-  const top = [...s.teams].sort((a, b) => b.score - a.score)[0];
-  return new Set([top.id]);
+  return new Set(getWinnerTeams(s).map((t) => t.id));
 }
 
 function toDto(s: Session): SessionDto {

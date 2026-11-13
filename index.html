@@ -13,6 +13,7 @@
     <meta property="og:description" content="Interactive digital classroom board game platform 100% controlled by the instructor with Bingo, Snakes & Ladders, and Card Matching games." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
     <script>
       (function() {
         try {
@@ -33,6 +34,14 @@
   </head>
   <body class="min-h-screen antialiased selection:bg-[#FFE36E] selection:text-[#4A3D8F]">
     <div id="root"></div>
+    <!-- Plain links for crawlers and sitemap generators that do not run JavaScript -->
+    <noscript>
+      <nav aria-label="Site pages">
+        <a href="/">Main Menu</a> · <a href="/login">Login / Register</a> · <a href="/dashboard">Teacher Dashboard</a> ·
+        <a href="/sessions">Saved Sessions</a> · <a href="/create">Create Session</a> · <a href="/how-to-play">How to Play</a> ·
+        <a href="/sitemap.html">Sitemap</a>
+      </nav>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -7,7 +7,6 @@ dist/
 # Spring Boot
 backend/target/
 backend/data/
-backend/src/main/resources/static/
 
 # Editors / OS
 .idea/

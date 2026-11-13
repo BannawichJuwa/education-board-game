@@ -3,9 +3,10 @@ import { Session, Team, GameEventLog } from '../types';
 import {
   getTeamPalette,
   getTerritoryStats,
-  rankTeamsByBingoTerritory,
   exportSessionToCSV,
 } from '../utils/storage';
+import { rankTeams, joinTeamNames } from '../utils/ranking';
+import { Podium } from './Podium';
 import { formatScore, formatDurationSeconds, formatDateTime, formatTime } from '../utils/formatters';
 import { DeleteSessionModal } from './DeleteSessionModal';
 import { useLanguage } from '../context/LanguageContext';
@@ -43,29 +44,11 @@ export const ScoreboardModal: React.FC<ScoreboardModalProps> = ({
       : null;
   }, [session]);
 
-  // Rank teams
-  const rankedTeams = useMemo(() => {
-    const isBingoNoLine =
-      session.gameType === 'bingo' &&
-      session.bingoState &&
-      !session.bingoState.winnerTeamId;
-
-    let list = isBingoNoLine
-      ? rankTeamsByBingoTerritory(session.bingoState!, session.teams)
-      : [...session.teams].sort((a, b) => b.score - a.score);
-
-    if (session.gameType === 'bingo' && session.bingoState?.winnerTeamId) {
-      const lineWinnerId = session.bingoState.winnerTeamId;
-      list = [...session.teams].sort((a, b) => {
-        if (a.id === lineWinnerId) return -1;
-        if (b.id === lineWinnerId) return 1;
-        return b.score - a.score;
-      });
-    }
-    return list;
-  }, [session]);
-
-  const winner: Team | undefined = rankedTeams[0];
+  // Rank teams (standard competition ranking: ties share a rank, next rank is skipped)
+  const standings = useMemo(() => rankTeams(session), [session]);
+  const champions: Team[] = useMemo(() => standings.filter((r) => r.rank === 1).map((r) => r.team), [standings]);
+  const isTie = champions.length > 1;
+  const winner: Team | undefined = champions[0];
 
   // Overview stats
   const overview = useMemo(() => {
@@ -241,6 +224,13 @@ export const ScoreboardModal: React.FC<ScoreboardModalProps> = ({
                 <span className="px-badge bg-[var(--px-pink)] text-xs font-bold text-[var(--px-on-pink)] block sm:inline-block">
                   {getEndReasonLabel()}
                 </span>
+                {session.status === 'completed' && (
+                  <span id="scoreboard-outcome" className="px-badge bg-[var(--color-px-yellow)] text-xs font-bold text-[#2A2350] block sm:inline-block sm:ml-1">
+                    {isTie
+                      ? `${t('drawBadge')} ${t('coChampionsTitle')}: ${joinTeamNames(champions)}`
+                      : `${language === 'en' ? 'Winner' : 'ผู้ชนะ'}: ${winner?.name ?? '-'}`}
+                  </span>
+                )}
                 <div className="text-xs text-[var(--px-text-muted)] num">
                   <span>{formatDateTime(session.createdAt, language)}</span>
                 </div>
@@ -273,20 +263,23 @@ export const ScoreboardModal: React.FC<ScoreboardModalProps> = ({
             {/* Card 1: Winning Team */}
             <div className="p-3 bg-[var(--px-surface-sunken)] border-2 border-[var(--px-border)] shadow-[2px_2px_0_var(--px-hard-shadow)] space-y-1">
               <span className="text-[13px] font-bold text-[var(--px-text-muted)] uppercase block">
-                {language === 'en' ? 'Top Team' : 'ทีมชนะเลิศ'}
+                {isTie
+                  ? (language === 'en' ? 'Co-Champions (Tie)' : 'ทีมชนะเลิศร่วม (เสมอ)')
+                  : (language === 'en' ? 'Top Team' : 'ทีมชนะเลิศ')}
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-xl">🏆</span>
-                <span className="font-pixel font-bold text-sm truncate text-[var(--px-text)]">
-                  {winner?.name}
+                <span id="scoreboard-top-team" className="font-pixel font-bold text-sm truncate text-[var(--px-text)]" title={joinTeamNames(champions)}>
+                  {joinTeamNames(champions)}
                 </span>
               </div>
               <span className="text-xs font-bold num block text-[var(--color-accent-strong)]">
                 {winner ? formatScore(winner.score, language) : '-'}
+                {isTie && (language === 'en' ? ' each' : ' (ต่อทีม)')}
               </span>
-              {winner?.students && winner.students.length > 0 && (
+              {champions.some((c) => c.students && c.students.length > 0) && (
                 <div className="text-[11px] text-[var(--px-text)] truncate font-bold pt-1 border-t border-[var(--px-border)]/20">
-                  👥 {winner.students.join(', ')}
+                  👥 {champions.flatMap((c) => c.students || []).join(', ')}
                 </div>
               )}
             </div>
@@ -351,6 +344,12 @@ export const ScoreboardModal: React.FC<ScoreboardModalProps> = ({
               </h3>
             </div>
 
+            {session.teams.length > 0 && (
+              <div className="py-2">
+                <Podium session={session} standings={standings} />
+              </div>
+            )}
+
             <div className="overflow-x-auto border-2 border-[var(--px-border)] bg-[var(--px-surface-2)]">
               <table className="w-full text-left text-xs text-[var(--px-text)] border-collapse">
                 <thead className="bg-[var(--px-sky)] text-[var(--px-on-sky)] font-pixel text-xs uppercase border-b-2 border-[var(--px-border)]">
@@ -379,27 +378,32 @@ export const ScoreboardModal: React.FC<ScoreboardModalProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--px-border-muted)]">
-                  {rankedTeams.map((team, idx) => {
+                  {standings.map(({ team, rank, isTied }, idx) => {
                     const origIdx = session.teams.findIndex((tm) => tm.id === team.id);
                     const pal = getTeamPalette(team, origIdx >= 0 ? origIdx : idx);
                     const tStat = territoryStats?.[team.id];
 
                     return (
-                      <tr key={team.id} className="hover:bg-[var(--px-surface-sunken)] transition">
-                        <td className="py-2.5 px-3">
+                      <tr key={team.id} className="hover:bg-[var(--px-surface-sunken)] transition" data-rank={rank}>
+                        <td className="py-2.5 px-3 whitespace-nowrap">
                           <span
-                            className={`w-6 h-6 inline-flex items-center justify-center font-pixel font-bold text-xs border border-[var(--px-border)] ${
-                              idx === 0
+                            className={`min-w-6 h-6 px-1 inline-flex items-center justify-center font-pixel font-bold text-xs border border-[var(--px-border)] ${
+                              rank === 1
                                 ? 'bg-[var(--px-yellow)] text-[var(--px-on-yellow)]'
-                                : idx === 1
+                                : rank === 2
                                 ? 'bg-[var(--px-sky)] text-[var(--px-on-sky)]'
-                                : idx === 2
+                                : rank === 3
                                 ? 'bg-[var(--px-pink)] text-[var(--px-on-pink)]'
                                 : 'bg-[var(--px-surface)]'
                             }`}
                           >
-                            #{idx + 1}
+                            #{rank}
                           </span>
+                          {isTied && (
+                            <span className="tie-tag ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-[var(--color-px-yellow)] text-[#2A2350] border border-[var(--px-border)] align-middle">
+                              {t('tieLabel')}
+                            </span>
+                          )}
                         </td>
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-2">

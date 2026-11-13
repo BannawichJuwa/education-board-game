@@ -72,10 +72,10 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
         <nav className="hidden md:flex items-center gap-6 lg:gap-8 font-pixel text-sm font-bold text-[var(--color-px-ink-dark,#3B3270)]">
           {/* Guest only: Home link (CUT OUT completely when logged in) */}
           {!currentUser && onOpenMenu && (
-            <button
+            <a
               id="nav-link-home"
-              type="button"
-              onClick={() => handleAction(onOpenMenu)}
+              href="/"
+              onClick={(e) => { e.preventDefault(); handleAction(onOpenMenu); }}
               className={`py-1 border-b-3 cursor-pointer transition-colors ${
                 currentView === 'menu'
                   ? 'border-[var(--color-px-ink-dark,#3B3270)] text-[var(--color-px-ink-dark,#3B3270)]'
@@ -83,15 +83,15 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
               }`}
             >
               {t('navHome')}
-            </button>
+            </a>
           )}
 
           {/* Logged in teachers: Dashboard is the primary home */}
           {currentUser && onOpenDashboard && (
-            <button
+            <a
               id="nav-link-dashboard"
-              type="button"
-              onClick={() => handleAction(onOpenDashboard)}
+              href="/dashboard"
+              onClick={(e) => { e.preventDefault(); handleAction(onOpenDashboard); }}
               className={`py-1 border-b-3 cursor-pointer transition-colors ${
                 currentView === 'dashboard'
                   ? 'border-[var(--color-px-ink-dark,#3B3270)] text-[var(--color-px-ink-dark,#3B3270)]'
@@ -99,22 +99,22 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
               }`}
             >
               {t('dashboard')}
-            </button>
+            </a>
           )}
 
-          <button
+          <a
             id="nav-link-create"
-            type="button"
-            onClick={() => handleAction(onOpenCreate)}
+            href="/create"
+            onClick={(e) => { e.preventDefault(); handleAction(onOpenCreate); }}
             className="py-1 border-b-3 border-transparent hover:border-[var(--color-px-ink,#6B5BB5)] hover:text-[var(--color-px-ink,#6B5BB5)] transition-colors cursor-pointer"
           >
             {t('navCreateGame')}
-          </button>
+          </a>
 
-          <button
+          <a
             id="nav-link-sessions"
-            type="button"
-            onClick={() => handleAction(onOpenSessions)}
+            href="/sessions"
+            onClick={(e) => { e.preventDefault(); handleAction(onOpenSessions); }}
             className={`py-1 border-b-3 cursor-pointer transition-colors flex items-center gap-1.5 ${
               currentView === 'sessions'
                 ? 'border-[var(--color-px-ink-dark,#3B3270)] text-[var(--color-px-ink-dark,#3B3270)]'
@@ -127,17 +127,17 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
                 {sessionsCount}
               </span>
             )}
-          </button>
+          </a>
 
           {/* How to Play link - Opens HowToPlayModal Popup */}
-          <button
+          <a
             id="nav-link-how-to-play"
-            type="button"
-            onClick={() => handleAction(onOpenHowToPlay)}
+            href="/how-to-play"
+            onClick={(e) => { e.preventDefault(); handleAction(onOpenHowToPlay); }}
             className="py-1 border-b-3 border-transparent hover:border-[var(--color-px-ink,#6B5BB5)] hover:text-[var(--color-px-ink,#6B5BB5)] transition-colors cursor-pointer"
           >
             {t('navHowToPlay')}
-          </button>
+          </a>
         </nav>
 
         {/* Right: Controls & CTA Button */}
@@ -244,16 +244,16 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
                 )}
               </div>
             ) : (
-              <button
+              <a
                 id="top-nav-account-button"
-                type="button"
-                onClick={() => handleAction(onOpenLogin)}
+                href="/login"
+                onClick={(e) => { e.preventDefault(); handleAction(onOpenLogin); }}
                 className="px-2.5 py-1 bg-[var(--color-px-window,#FBF9FF)] border-2 border-[var(--color-px-ink,#6B5BB5)] shadow-[2px_2px_0_var(--color-px-ink,#6B5BB5)] text-xs font-pixel font-bold text-[var(--color-px-ink-dark,#3B3270)] hover:bg-[var(--color-px-sky,#A8D4F5)] hover:text-[#2A2350] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
                 title={t('login')}
               >
                 <PixelIcon name="user" size={14} />
                 <span>{t('login')}</span>
-              </button>
+              </a>
             )}
           </div>
 

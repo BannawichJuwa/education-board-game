@@ -3,12 +3,9 @@ import { FireworksCanvas } from './FireworksCanvas';
 import { Session, Team } from '../types';
 import { playVictorySound, playClickSound } from '../utils/audio';
 import { useLanguage } from '../context/LanguageContext';
-import {
-  getTeamPalette,
-  getTerritoryStats,
-  rankTeamsByBingoTerritory,
-  exportSessionToCSV,
-} from '../utils/storage';
+import { getTeamPalette, getTerritoryStats } from '../utils/storage';
+import { rankTeams, joinTeamNames } from '../utils/ranking';
+import { Podium } from './Podium';
 import { formatScore, formatDurationSeconds } from '../utils/formatters';
 import { PixelIcon } from './PixelIcon';
 
@@ -39,7 +36,6 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
   onGoToScoreboard,
   onGoToSessions,
   onGoToMenu,
-  onRestart,
 }) => {
   const { t, language } = useLanguage();
   const [isSettled, setIsSettled] = useState(false);
@@ -61,28 +57,11 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
     }
   }, [isOpen]);
 
-  // Derived statistics and rankings
-  const rankedTeams = useMemo(() => {
-    if (!session) return [];
-    const isBingoNoLine =
-      session.gameType === 'bingo' && !session.bingoState?.winnerTeamId && session.bingoState;
-    if (isBingoNoLine) {
-      return rankTeamsByBingoTerritory(session.bingoState!, session.teams);
-    }
-    return [...session.teams].sort((a, b) => b.score - a.score);
-  }, [session]);
-
-  const winner: Team | undefined = useMemo(() => {
-    if (!session || rankedTeams.length === 0) return undefined;
-    if (session.gameType === 'bingo' && session.bingoState?.winnerTeamId) {
-      const bingoWinner = session.teams.find((tm) => tm.id === session.bingoState?.winnerTeamId);
-      if (bingoWinner) return bingoWinner;
-    } else if (session.winnerTeamId) {
-      const rec = session.teams.find((tm) => tm.id === session.winnerTeamId);
-      if (rec) return rec;
-    }
-    return rankedTeams[0];
-  }, [session, rankedTeams]);
+  // Rankings with ties (1, 1, 3). Every team in first place is a champion.
+  const standings = useMemo(() => (session ? rankTeams(session) : []), [session]);
+  const champions: Team[] = useMemo(() => standings.filter((r) => r.rank === 1).map((r) => r.team), [standings]);
+  const isTie = champions.length > 1;
+  const winner: Team | undefined = champions[0];
 
   // Key stats calculations
   const stats = useMemo(() => {
@@ -189,8 +168,6 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
 
   if (!isOpen || !session || !winner) return null;
 
-  const winnerIdx = session.teams.findIndex((tm) => tm.id === winner.id);
-  const winnerPalette = getTeamPalette(winner, winnerIdx >= 0 ? winnerIdx : 0);
   const territoryStats =
     session.gameType === 'bingo' && session.bingoState
       ? getTerritoryStats(session.bingoState, session.teams)
@@ -199,6 +176,18 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
   // Plain language win reason sentence
   const getPlainWinReason = () => {
     const ptsStr = formatScore(winner.score, language);
+    if (isTie) {
+      const names = joinTeamNames(champions);
+      if (session.gameType === 'bingo' && !session.bingoState?.winnerTeamId) {
+        const held = territoryStats?.[winner.id]?.tilesHeld || 0;
+        return language === 'en'
+          ? `It's a draw! ${names} share first place with ${held} ${held === 1 ? 'tile' : 'tiles'} and ${ptsStr} each. They are co-champions.`
+          : `ผลการแข่งขันเสมอกัน! ${names} ได้อันดับ 1 ร่วมกัน (ยึดได้ทีมละ ${held} ช่อง และ ${ptsStr}) เป็นแชมป์ร่วม`;
+      }
+      return language === 'en'
+        ? `It's a draw! ${names} share first place with ${ptsStr} each. They are co-champions.`
+        : `ผลการแข่งขันเสมอกัน! ${names} ได้อันดับ 1 ร่วมกันด้วยคะแนนทีมละ ${ptsStr} เป็นแชมป์ร่วม`;
+    }
     if (session.gameType === 'bingo') {
       if (winReason === 'bingo_line' || (session.bingoState?.winnerTeamId && session.bingoState.winnerTeamId === winner.id)) {
         return language === 'en'
@@ -207,7 +196,7 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
       }
       const wStat = territoryStats?.[winner.id];
       return language === 'en'
-        ? `${winner.name} won by holding ${wStat?.tilesHeld || 0} territory tiles with ${ptsStr}!`
+        ? `${winner.name} won by holding ${wStat?.tilesHeld || 0} territory ${(wStat?.tilesHeld || 0) === 1 ? 'tile' : 'tiles'} with ${ptsStr}!`
         : `${winner.name} ชนะด้วยการยึดพื้นที่ ${wStat?.tilesHeld || 0} ช่อง ด้วยคะแนนรวม ${ptsStr}!`;
     }
 
@@ -234,8 +223,6 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
       : `${winner.name} ชนะการแข่งขันด้วยคะแนนสูงสุด ${ptsStr}!`;
   };
 
-  const top3 = rankedTeams.slice(0, 3);
-
   return (
     <>
       {/* Background continuous ambient fireworks (behind modal window, 100% clear & silent) */}
@@ -256,7 +243,7 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
           <div className="flex items-center gap-2 truncate">
             <PixelIcon name="trophy" size={18} />
             <span id="victory-modal-title" className="truncate font-pixel text-sm">
-              victory.exe — {language === 'en' ? 'LEVEL CLEAR & VICTORY!' : 'ชัยชนะและบทสรุปการแข่งขัน!'}
+              victory.exe — {isTie ? (language === 'en' ? 'LEVEL CLEAR & DRAW!' : 'ผลเสมอและบทสรุปการแข่งขัน!') : language === 'en' ? 'LEVEL CLEAR & VICTORY!' : 'ชัยชนะและบทสรุปการแข่งขัน!'}
             </span>
           </div>
           <div className="px-titlebar-controls">
@@ -326,12 +313,17 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
 
             <div className="inline-flex items-center gap-2 px-4 py-1 bg-[var(--px-yellow)] border-2 border-[var(--px-border)] font-pixel font-bold text-sm sm:text-base text-[var(--px-on-yellow)] shadow-[3px_3px_0_var(--px-hard-shadow)]">
               <span>★</span>
-              <span>{language === 'en' ? 'VICTORY!' : 'ชัยชนะ!'}</span>
+              <span id="victory-badge">{isTie ? t('drawBadge') : language === 'en' ? 'VICTORY!' : 'ชัยชนะ!'}</span>
               <span>★</span>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-pixel font-bold mt-2 text-[var(--px-text)]">
-              {winner.name}
+            {isTie && (
+              <div className="mt-2 text-xs font-bold font-pixel text-[var(--color-accent-strong)] uppercase tracking-wider">
+                {t('coChampionsTitle')}
+              </div>
+            )}
+            <h2 id="victory-winner-name" className="text-2xl sm:text-3xl font-pixel font-bold mt-1 text-[var(--px-text)]">
+              {joinTeamNames(champions)}
             </h2>
 
             {/* Plain-Language Win Reason Sentence */}
@@ -339,27 +331,36 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
               {getPlainWinReason()}
             </p>
 
-            {/* Champion Team Members Prominent Showcase */}
-            {winner.students && winner.students.length > 0 && (
-              <div className="mt-3 max-w-lg mx-auto p-2.5 bg-[var(--px-surface-sunken)] border-2 border-[var(--px-border)] shadow-[3px_3px_0_var(--px-hard-shadow)]">
-                <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[var(--color-accent-strong)] mb-2">
+            {/* Champion Team Members (every tied team is listed) */}
+            {champions.some((c) => c.students && c.students.length > 0) && (
+              <div className="mt-3 max-w-xl mx-auto p-2.5 bg-[var(--px-surface-sunken)] border-2 border-[var(--px-border)] shadow-[3px_3px_0_var(--px-hard-shadow)] space-y-2">
+                <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[var(--color-accent-strong)]">
                   <PixelIcon name="star" size={14} />
-                  <span>{t('championMembersTitle')}</span>
-                  <span className="px-1.5 py-0.2 bg-[var(--px-surface)] border border-[var(--px-border)] text-[11px] font-bold num text-[var(--px-text)]">
-                    {t('memberCountBadge', { count: winner.students.length })}
-                  </span>
+                  <span>{isTie ? t('coChampionMembersTitle') : t('championMembersTitle')}</span>
                 </div>
-                <div className="flex flex-wrap items-center justify-center gap-1.5">
-                  {winner.students.map((st) => (
-                    <span
-                      key={st}
-                      className="px-2.5 py-1 bg-[var(--color-px-yellow)] text-[#2A2350] border-2 border-[var(--px-border)] text-xs font-bold shadow-[2px_2px_0_var(--px-hard-shadow)] flex items-center gap-1.5"
-                    >
-                      <span className="text-xs">🐱</span>
-                      <span>{st}</span>
-                    </span>
-                  ))}
-                </div>
+                {champions.map((champ) => (
+                  <div key={champ.id} className="space-y-1">
+                    {isTie && (
+                      <div className="text-[11px] font-bold text-[var(--px-text)]">
+                        {champ.name}{' '}
+                        <span className="px-1.5 bg-[var(--px-surface)] border border-[var(--px-border)] num">
+                          {t('memberCountBadge', { count: champ.students.length })}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center justify-center gap-1.5">
+                      {champ.students.map((st) => (
+                        <span
+                          key={st}
+                          className="px-2.5 py-1 bg-[var(--color-px-yellow)] text-[#2A2350] border-2 border-[var(--px-border)] text-xs font-bold shadow-[2px_2px_0_var(--px-hard-shadow)] flex items-center gap-1.5"
+                        >
+                          <span className="text-xs">🐱</span>
+                          <span>{st}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -400,99 +401,9 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
             </div>
           </div>
 
-          {/* 3. Three-Place Podium (1st, 2nd, 3rd) */}
+          {/* 3. Podium (tied teams stand at the same height) */}
           <div className="pt-2">
-            <div className="flex items-end justify-center gap-2 sm:gap-4 max-w-lg mx-auto">
-              {/* 2nd Place (Left) */}
-              {top3[1] && (
-                <div className="flex-1 flex flex-col items-center">
-                  <span className="text-xs font-bold truncate max-w-[90px] mb-1">
-                    {top3[1].name}
-                  </span>
-                  <span className="text-[13px] font-bold num text-[var(--px-text-muted)] mb-1">
-                    {formatScore(top3[1].score, language)}
-                  </span>
-                  {top3[1].students && top3[1].students.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-1 max-w-[120px] mb-1">
-                      {top3[1].students.slice(0, 2).map((st) => (
-                        <span key={st} className="text-[10px] font-bold px-1 bg-[var(--px-surface-2)] text-[var(--px-text)] border border-[var(--px-border)] truncate max-w-[80px]">
-                          {st}
-                        </span>
-                      ))}
-                      {top3[1].students.length > 2 && (
-                        <span className="text-[10px] font-bold text-[var(--px-text-muted)] num">
-                          +{top3[1].students.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div className="w-full h-20 sm:h-24 bg-[var(--px-sky)] border-2 border-[var(--px-border)] shadow-[3px_3px_0_var(--px-hard-shadow)] flex flex-col items-center justify-center text-[var(--px-on-sky)] font-pixel font-bold">
-                    <span className="text-xl sm:text-2xl">🥈</span>
-                    <span className="text-sm">#2</span>
-                  </div>
-                </div>
-              )}
-
-              {/* 1st Place (Center, tallest) */}
-              {top3[0] && (
-                <div className="flex-1 flex flex-col items-center">
-                  <span className="text-xs sm:text-sm font-bold truncate max-w-[110px] mb-1 text-[var(--color-accent-strong)]">
-                    {top3[0].name}
-                  </span>
-                  <span className="text-xs sm:text-sm font-bold num mb-1">
-                    {formatScore(top3[0].score, language)}
-                  </span>
-                  {top3[0].students && top3[0].students.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-1 max-w-[130px] mb-1">
-                      {top3[0].students.slice(0, 3).map((st) => (
-                        <span key={st} className="text-[10px] font-bold px-1 bg-[var(--color-px-yellow)] text-[#2A2350] border border-[var(--px-border)] truncate max-w-[80px]">
-                          {st}
-                        </span>
-                      ))}
-                      {top3[0].students.length > 3 && (
-                        <span className="text-[10px] font-bold text-[var(--px-text-muted)] num">
-                          +{top3[0].students.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div className="w-full h-28 sm:h-32 bg-[var(--px-yellow)] border-3 border-[var(--px-border)] shadow-[4px_4px_0_var(--px-hard-shadow)] flex flex-col items-center justify-center text-[var(--px-on-yellow)] font-pixel font-bold">
-                    <span className="text-2xl sm:text-3xl">🥇</span>
-                    <span className="text-base sm:text-lg">#1</span>
-                  </div>
-                </div>
-              )}
-
-              {/* 3rd Place (Right) */}
-              {top3[2] && (
-                <div className="flex-1 flex flex-col items-center">
-                  <span className="text-xs font-bold truncate max-w-[90px] mb-1">
-                    {top3[2].name}
-                  </span>
-                  <span className="text-[13px] font-bold num text-[var(--px-text-muted)] mb-1">
-                    {formatScore(top3[2].score, language)}
-                  </span>
-                  {top3[2].students && top3[2].students.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-1 max-w-[120px] mb-1">
-                      {top3[2].students.slice(0, 2).map((st) => (
-                        <span key={st} className="text-[10px] font-bold px-1 bg-[var(--px-surface-2)] text-[var(--px-text)] border border-[var(--px-border)] truncate max-w-[80px]">
-                          {st}
-                        </span>
-                      ))}
-                      {top3[2].students.length > 2 && (
-                        <span className="text-[10px] font-bold text-[var(--px-text-muted)] num">
-                          +{top3[2].students.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div className="w-full h-16 sm:h-20 bg-[var(--px-pink)] border-2 border-[var(--px-border)] shadow-[3px_3px_0_var(--px-hard-shadow)] flex flex-col items-center justify-center text-[var(--px-on-pink)] font-pixel font-bold">
-                    <span className="text-lg sm:text-xl">🥉</span>
-                    <span className="text-xs sm:text-sm">#3</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <Podium session={session} standings={standings} />
           </div>
 
           {/* 4. Team Result Cards & Game-Specific Stats with Prominent Members */}
@@ -501,7 +412,7 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
               {language === 'en' ? 'Final Standings & Team Members' : 'อันดับและสมาชิกแต่ละทีม'}
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {rankedTeams.map((team, idx) => {
+              {standings.map(({ team, rank, isTied }, idx) => {
                 const tIdx = session.teams.findIndex((tm) => tm.id === team.id);
                 const pal = getTeamPalette(team, tIdx >= 0 ? tIdx : idx);
                 const tStat = territoryStats?.[team.id];
@@ -514,8 +425,13 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 truncate">
                         <span className="w-5 h-5 bg-[var(--px-surface-sunken)] border border-[var(--px-border)] font-pixel font-bold flex items-center justify-center flex-shrink-0">
-                          #{idx + 1}
+                          #{rank}
                         </span>
+                        {isTied && (
+                          <span className="tie-tag px-1 text-[10px] font-bold bg-[var(--color-px-yellow)] text-[#2A2350] border border-[var(--px-border)] flex-shrink-0">
+                            {t('tieLabel')}
+                          </span>
+                        )}
                         <span
                           className="w-3.5 h-3.5 border flex-shrink-0"
                           style={{ backgroundColor: pal.hex, borderColor: pal.outlineHex }}
@@ -583,8 +499,19 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
             </div>
           )}
 
-          {/* 6. Action Bar */}
-          <div className="pt-2 space-y-2">
+          {/* 6. Guest 24-hour warning */}
+          {session.isGuest && (
+            <div
+              id="victory-guest-warning"
+              className="p-3 bg-[var(--color-px-yellow)] border-2 border-[var(--px-border)] text-[#2A2350] text-left text-xs leading-relaxed"
+            >
+              <strong className="block font-pixel">{t('guestBannerTitle')}</strong>
+              <span>{t('guestSaveWarning')}</span>
+            </div>
+          )}
+
+          {/* 7. Action Bar: View Scoreboard / Return to Menu */}
+          <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm font-bold">
             <button
               type="button"
               id="btn-celebration-to-scoreboard"
@@ -592,58 +519,23 @@ export const VictoryCelebrationModal: React.FC<VictoryCelebrationModalProps> = (
                 playClickSound();
                 onGoToScoreboard();
               }}
-              className="px-btn px-btn-primary w-full py-2.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2"
+              className="px-btn px-btn-primary py-2.5 flex items-center justify-center gap-2"
             >
               <PixelIcon name="trophy" size={16} />
-              <span>
-                {language === 'en'
-                  ? 'View Full Game Report & Analysis'
-                  : 'ดูรายงานสรุปผลการแข่งขันฉบับเต็ม (Game Report)'}
-              </span>
+              <span>{t('viewScoreboardBtn')}</span>
             </button>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-bold">
-              {onRestart && (
-                <button
-                  type="button"
-                  id="btn-celebration-restart"
-                  onClick={() => {
-                    playClickSound();
-                    onRestart();
-                  }}
-                  className="px-btn px-btn-secondary py-2 flex items-center justify-center gap-1.5"
-                >
-                  <PixelIcon name="cursor" size={14} />
-                  <span>{language === 'en' ? 'Play Again' : 'เริ่มเล่นรอบใหม่'}</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                id="btn-celebration-csv"
-                onClick={() => {
-                  playClickSound();
-                  exportSessionToCSV(session);
-                }}
-                className="px-btn px-btn-sky py-2 flex items-center justify-center gap-1.5"
-              >
-                <PixelIcon name="folder" size={14} />
-                <span>{language === 'en' ? 'Export CSV' : 'ส่งออกไฟล์ CSV'}</span>
-              </button>
-
-              <button
-                type="button"
-                id="btn-celebration-to-menu"
-                onClick={() => {
-                  playClickSound();
-                  onGoToMenu();
-                }}
-                className="px-btn px-btn-pink py-2 flex items-center justify-center gap-1.5"
-              >
-                <PixelIcon name="computer" size={14} />
-                <span>{t('backToMenu')}</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              id="btn-celebration-to-menu"
+              onClick={() => {
+                playClickSound();
+                onGoToMenu();
+              }}
+              className="px-btn px-btn-pink py-2.5 flex items-center justify-center gap-2"
+            >
+              <PixelIcon name="computer" size={14} />
+              <span>{t('returnToMenuBtn')}</span>
+            </button>
           </div>
         </div>
       </div>

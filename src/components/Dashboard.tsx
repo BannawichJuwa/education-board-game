@@ -363,7 +363,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             className="px-btn px-3 py-1 text-xs font-bold flex items-center gap-1"
                           >
                             <Play className="w-3.5 h-3.5 fill-current" />
-                            <span>{language === 'en' ? 'Continue' : 'เล่นต่อ'}</span>
+                            <span>{t('continuePlayingBtn')}</span>
                           </button>
                         )}
                       </div>

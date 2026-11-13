@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Root build file: lets the whole project run from the repository root with
+      mvn spring-boot:run
+  The Spring Boot application itself is the module in backend/ (backend/pom.xml).
+  The React website is already built into backend/src/main/resources/static,
+  so http://localhost:8080 shows the full web application.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.eduboard</groupId>
+    <artifactId>education-board-game</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>Education Board Game</name>
+
+    <modules>
+        <module>backend</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <!-- Declared here so "mvn spring-boot:run" works in the root folder;
+                 the root itself has nothing to run, so it is skipped here and runs in backend/ -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.4.5</version>
+                <inherited>false</inherited>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
