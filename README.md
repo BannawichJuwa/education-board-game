@@ -1,5 +1,11 @@
 # Education Board Game
 
+> ## 🌐 Live website: **[https://eduboard-798471611335.us-central1.run.app](https://eduboard-798471611335.us-central1.run.app)**
+>
+> Deployed on Google Cloud Run (Spring Boot + MySQL on Cloud SQL). Open it in any browser – no install needed.
+> Create your own teacher account on the **Log In** page, or play without an account (Guest Mode).
+> Sitemap of every page and its functions: [/sitemap.xml](https://eduboard-798471611335.us-central1.run.app/sitemap.xml)
+
 Education Board Game is a classroom web application that turns a quiz into a team board game played on one
 projector screen. The teacher creates a session (subject, game, board size, time limit, teams and questions),
 reads each question aloud, picks the team that raised a hand first and marks the answer Correct or Wrong; only a
@@ -11,10 +17,10 @@ Guest Mode keeps sessions in the browser for 24 hours.
 ## GROUP MEMBERS
 
 ```
-6831503036  Chanon Phetsuit
-6831503047  Daniel Yee-wangkong
-6831503049  Traiwit Jaroensri
-6831503055  Bannawich Juwa
+6831503036  | Chanon Phetsuit |
+6831503047  | Daniel Yee-wangkong | 
+6831503049  | Traiwit Jaroensri | 
+6831503055  | Bannawich Juwa |
 6831503084  
 ```
 
@@ -54,7 +60,7 @@ mvn test                      # automated API test (backend/src/test/.../ApiFlow
 ```
 
 The local database is an H2 file in `backend/data/` (created on the first run, not committed).
-The live version runs on Google Cloud Run with MySQL on Cloud SQL: https://eduboard-798471611335.us-central1.run.app
+The live version runs on Google Cloud Run with MySQL on Cloud SQL: **[https://eduboard-798471611335.us-central1.run.app](https://eduboard-798471611335.us-central1.run.app)**
 (steps in [DEPLOY.md](DEPLOY.md); passwords and secrets are given as environment variables, never stored in the repository).
 
 ### Changing the frontend (only for developers)
