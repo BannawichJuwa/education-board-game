@@ -17,10 +17,10 @@ Guest Mode keeps sessions in the browser for 24 hours.
 ## GROUP MEMBERS
 
 ```
-6831503036  | Chanon Phetsuit |
-6831503047  | Daniel Yee-wangkong | 
-6831503049  | Traiwit Jaroensri | 
-6831503055  | Bannawich Juwa |
+6831503036   Chanon Phetsuit 
+6831503047   Daniel Yee-wangkong  
+6831503049   Traiwit Jaroensri 
+6831503055   Bannawich Juwa 
 6831503084  
 ```
 
